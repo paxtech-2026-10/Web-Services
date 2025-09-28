@@ -1,0 +1,189 @@
+@startuml
+package "Services" {
+    package "Domain" {
+        package "Model" {
+            package "Aggregates" {
+                class Services {
+                    -providerId: providerId
+                    -serviceDetails: ServiceDetails
+                    -serviceName: ServiceName
+                    -duration: Duration
+                    -price: Money
+                    -status: Status
+                }
+            }
+
+            package "ValueObjects" {
+                class ProviderId <<ValueObject>> {
+                    -id: long
+                }
+                class ServiceDetails <<ValueObject>>{
+                    -serviceDetails: long
+                }
+                class ServiceName <<ValueObject>> {
+                    -serviceName: long
+                }
+                class Duration <<ValueObject>> {
+                    -duration: Int
+                }
+                class Status <<ValueObject>> {
+                    -status: Boolean
+                }
+            }
+
+            package "Commands" {
+                class CreateServiceCommand <<Record>> {}
+                class UpdateServiceCommand <<Record>> {}
+            }
+            package "Queries" {
+                class GetAllServicesQuery <<Record>> {}
+                class GetServiceByIdQuery <<Record>> {}
+                class GetServicesByProviderIdQuery <<Record>> {}
+            }
+        }
+        package "Services" {
+            class ServiceCommandService <<Interface>> {
+                +Optional<Services> handle(CreateServiceCommand command)
+                +Optional<Services> handle(UpdateServiceCommand command)
+            }
+            class ServicesQueryService <<Interface>> {
+                +List<Services> handle(GetAllServicesQuery query)
+                +Optional<Services> handle(GetServiceByIdQuery query)
+                +List<Services> handle(GetServicesByProviderIdQuery query)
+            }
+        }
+
+        package "Exeptions" {
+            class ProviderNotFoundException <<Exception>> {
+                +ProviderNotFoundException(providerId)
+            }
+        }
+    }
+    package "Application" {
+        package "Internal" {
+            package CommandServices {
+                class ServiceCommandServiceImpl {
+                    -ServiceRepository: serviceRepository
+                    --
+                    +Optional<Services> handle(CreateServiceCommand command)
+                    +Optional<Services> handle(UpdateServiceCommand command)
+                }
+            }
+            package QueryServices {
+                class ServicesQueryServiceImpl {
+                    -ServiceRepository: serviceRepository
+                    --
+                    +List<Services> handle(GetAllServicesQuery query)
+                    +Optional<Services> handle(GetServiceByIdQuery query)
+                    +List<Services> handle(GetServicesByProviderIdQuery query)
+                }
+            }
+        }
+    }
+    package "Infrastructure" {
+        package "Persistence" {
+            package "jpa" {
+                class ServiceRepository <<Interface>> {}
+            }
+        }
+    }
+    package "Interfaces" {
+        package "Rest" {
+            package "Controllers" {
+                class ServiceController {
+                    -ServiceCommandService: serviceCommandService
+                    -ServicesQueryService: servicesQueryService
+                    --
+                    +ResponseEntity<ServiceResource>: createService()
+                    +ResponseEntity<ServiceResource>: updateService()
+                    +ResponseEntity<?>: getServicesWithParameters()
+                    +ResponseEntity<ServiceResource>: getServiceById()
+                    +ResponseEntity<List<ServiceResource>>: getAllServices()
+                }
+            }
+            package "Resources" {
+                class ServiceResource <<Record>> {}
+                class CreateServiceCommand <<Record>> {}
+                class UpdateServiceCommand <<Record>> {}
+            }
+            package "Assembler" {
+                class ServiceResourceFromEntityAssembler {
+                    +ServiceResource: toResourceFromEntity()
+                }
+                class CreateServiceCommandFromResourceAssembler {
+                    +CreateServiceCommand: toCommandFromResource()
+                }
+                class UpdateServiceCommandFromResourceAssembler {
+                    +UpdateServiceCommand: toCommandFromResource()
+                }
+            }
+        }
+    }
+}
+
+' === AGGREGATE con VALUE OBJECTS ===
+Services.Domain.Model.Aggregates.Services --> Services.Domain.Model.ValueObjects.ProviderId
+Services.Domain.Model.Aggregates.Services --> Services.Domain.Model.ValueObjects.ServiceDetails
+Services.Domain.Model.Aggregates.Services --> Services.Domain.Model.ValueObjects.ServiceName
+Services.Domain.Model.Aggregates.Services --> Services.Domain.Model.ValueObjects.Duration
+Services.Domain.Model.Aggregates.Services --> Services.Domain.Model.ValueObjects.Status
+
+
+' === COMMANDS/QUERIES con AGGREGATE ===
+Services.Domain.Model.Commands.CreateServiceCommand --> Services.Domain.Model.Aggregates.Services
+Services.Domain.Model.Commands.UpdateServiceCommand --> Services.Domain.Model.Aggregates.Services
+
+Services.Domain.Model.Queries.GetAllServicesQuery --> Services.Domain.Model.Aggregates.Services
+Services.Domain.Model.Queries.GetServiceByIdQuery --> Services.Domain.Model.Aggregates.Services
+Services.Domain.Model.Queries.GetServicesByProviderIdQuery --> Services.Domain.Model.Aggregates.Services
+
+Services.Interfaces.Rest.Resources.CreateServiceCommand --> Services.Domain.Model.Commands.CreateServiceCommand
+Services.Interfaces.Rest.Assembler.CreateServiceCommandFromResourceAssembler --> Services.Interfaces.Rest.Resources.CreateServiceCommand
+Services.Interfaces.Rest.Assembler.CreateServiceCommandFromResourceAssembler --> Services.Domain.Model.Commands.CreateServiceCommand
+
+Services.Interfaces.Rest.Resources.UpdateServiceCommand --> Services.Domain.Model.Commands.UpdateServiceCommand
+Services.Interfaces.Rest.Assembler.UpdateServiceCommandFromResourceAssembler --> Services.Interfaces.Rest.Resources.UpdateServiceCommand
+Services.Interfaces.Rest.Assembler.UpdateServiceCommandFromResourceAssembler --> Services.Domain.Model.Commands.UpdateServiceCommand
+
+Services.Interfaces.Rest.Resources.ServiceResource --> Services.Domain.Model.Aggregates.Services
+Services.Interfaces.Rest.Assembler.ServiceResourceFromEntityAssembler --> Services.Interfaces.Rest.Resources.ServiceResource
+Services.Interfaces.Rest.Assembler.ServiceResourceFromEntityAssembler --> Services.Domain.Model.Aggregates.Services
+
+
+' === DOMAIN SERVICES con COMMANDS/QUERIES ===
+Services.Domain.Services.ServiceCommandService --> Services.Domain.Model.Commands.CreateServiceCommand
+Services.Domain.Services.ServiceCommandService --> Services.Domain.Model.Commands.UpdateServiceCommand
+Services.Domain.Services.ServicesQueryService --> Services.Domain.Model.Queries.GetAllServicesQuery
+Services.Domain.Services.ServicesQueryService --> Services.Domain.Model.Queries.GetServiceByIdQuery
+Services.Domain.Services.ServicesQueryService --> Services.Domain.Model.Queries.GetServicesByProviderIdQuery
+
+
+' === SERVICE IMPL con REPOSITORY/COMMANDS ===
+Services.Application.Internal.CommandServices.ServiceCommandServiceImpl --> Services.Infrastructure.Persistence.jpa.ServiceRepository
+Services.Application.Internal.CommandServices.ServiceCommandServiceImpl --> Services.Domain.Model.Commands.CreateServiceCommand
+Services.Application.Internal.CommandServices.ServiceCommandServiceImpl --> Services.Domain.Model.Commands.UpdateServiceCommand
+
+Services.Application.Internal.QueryServices.ServicesQueryServiceImpl --> Services.Infrastructure.Persistence.jpa.ServiceRepository
+Services.Application.Internal.QueryServices.ServicesQueryServiceImpl --> Services.Domain.Model.Queries.GetAllServicesQuery
+Services.Application.Internal.QueryServices.ServicesQueryServiceImpl --> Services.Domain.Model.Queries.GetServiceByIdQuery
+Services.Application.Internal.QueryServices.ServicesQueryServiceImpl --> Services.Domain.Model.Queries.GetServicesByProviderIdQuery
+
+
+' === CONTROLLER con SERVICES ===
+Services.Interfaces.Rest.Controllers.ServiceController --> Services.Domain.Services.ServiceCommandService
+Services.Interfaces.Rest.Controllers.ServiceController --> Services.Domain.Services.ServicesQueryService
+Services.Interfaces.Rest.Controllers.ServiceController --> Services.Domain.Model.Commands.CreateServiceCommand
+Services.Interfaces.Rest.Controllers.ServiceController --> Services.Domain.Model.Commands.UpdateServiceCommand
+Services.Interfaces.Rest.Controllers.ServiceController --> Services.Domain.Model.Queries.GetAllServicesQuery
+Services.Interfaces.Rest.Controllers.ServiceController --> Services.Domain.Model.Queries.GetServiceByIdQuery
+Services.Interfaces.Rest.Controllers.ServiceController --> Services.Domain.Model.Queries.GetServicesByProviderIdQuery
+Services.Interfaces.Rest.Controllers.ServiceController --> Services.Domain.Model.Aggregates.Services
+
+
+' === ASSEMBLER con RESOURCES/COMMANDS/AGGREGATES ===
+Services.Interfaces.Rest.Assembler.ServiceResourceFromEntityAssembler --> Services.Interfaces.Rest.Resources.ServiceResource
+Services.Interfaces.Rest.Assembler.ServiceResourceFromEntityAssembler --> Services.Domain.Model.Aggregates.Services
+
+Services.Interfaces.Rest.Assembler.CreateServiceCommandFromResourceAssembler --> Services.Domain.Model.Commands.CreateServiceCommand
+Services.Interfaces.Rest.Assembler.UpdateServiceCommandFromResourceAssembler --> Services.Domain.Model.Commands.UpdateServiceCommand
+@enduml

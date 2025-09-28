@@ -1,0 +1,235 @@
+@startuml
+skinparam packageStyle rectangle
+
+' === PROFILES ===
+package "Profiles" {
+    package "Domain" {
+        package "Model" {
+            package "Aggregates" {}
+            package "Commands" {}
+            package "Queries" {}
+            package "ValueObjects" {}
+        }
+        package "Services" {}
+    }
+    package "Application.Internal" {
+        package "CommandServices" {}
+        package "QueryServices" {}
+    }
+    package "Infrastructure.Persistence" {
+        package "JPA" {}
+    }
+    package "Interfaces.Rest" {
+        package "Controllers" {}
+        package "Transform" {}
+        package "Resources" {}
+    }
+}
+
+' === SERVICES ===
+package "Services" {
+    package "Domain" {
+        package "Model" {
+            package "Aggregates" {}
+            package "Commands" {}
+            package "Queries" {}
+            package "ValueObjects" {}
+        }
+        package "Services" {}
+    }
+    package "Application.Internal" {
+        package "CommandServices" {}
+        package "QueryServices" {}
+    }
+    package "Infrastructure.Persistence" {
+        package "JPA" {}
+    }
+    package "Interfaces.Rest" {
+        package "Controllers" {}
+        package "Transform" {}
+        package "Resources" {}
+    }
+}
+
+' === REVIEWS ===
+package "Reviews" {
+    package "Domain" {
+        package "Model" {
+            package "Aggregates" {}
+            package "Commands" {}
+            package "Queries" {}
+            package "ValueObjects" {}
+        }
+        package "Services" {}
+    }
+    package "Application.Internal" {
+        package "CommandServices" {}
+        package "QueryServices" {}
+    }
+    package "Infrastructure.Persistence" {
+        package "JPA" {}
+    }
+    package "Interfaces.Rest" {
+        package "Controllers" {}
+        package "Transform" {}
+        package "Resources" {}
+    }
+}
+
+' === RESERVATIONS ===
+package "Reservations" {
+    package "Domain" {
+        package "Model" {
+            package "Aggregates" {}
+            package "Commands" {}
+            package "Queries" {}
+            package "ValueObjects" {}
+        }
+        package "Services" {}
+    }
+    package "Application.Internal" {
+        package "CommandServices" {}
+        package "QueryServices" {}
+    }
+    package "Infrastructure.Persistence" {
+        package "JPA" {}
+    }
+    package "Interfaces.Rest" {
+        package "Controllers" {}
+        package "Transform" {}
+        package "Resources" {}
+    }
+}
+
+' === WORKERS ===
+package "Workers" {
+    package "Domain" {
+        package "Model" {
+            package "Aggregates" {}
+            package "Commands" {}
+            package "Queries" {}
+            package "ValueObjects" {}
+        }
+        package "Services" {}
+    }
+    package "Application.Internal" {
+        package "CommandServices" {}
+        package "QueryServices" {}
+    }
+    package "Infrastructure.Persistence" {
+        package "JPA" {}
+    }
+    package "Interfaces.Rest" {
+        package "Controllers" {}
+        package "Transform" {}
+        package "Resources" {}
+    }
+}
+
+' === SHARED ===
+package "Shared.Infrastructure.Persistence.JPA" {
+    package "Strategy" {}
+}
+
+' === EXTERNOS ===
+package org.springframework.data {
+    package domain {}
+}
+package org.hibernate.boot.model {
+    package naming {}
+}
+
+' === RELACIONES DE PROFILES ===
+Profiles.Domain.Model.Aggregates ..> org.springframework.data.domain
+Profiles.Domain.Model.Aggregates ..> Profiles.Domain.Model.ValueObjects
+Profiles.Application.Internal.CommandServices ..> Profiles.Domain.Services
+Profiles.Application.Internal.CommandServices ..> Profiles.Infrastructure.Persistence.JPA
+Profiles.Application.Internal.CommandServices ..> Profiles.Domain.Model.Commands
+Profiles.Application.Internal.CommandServices ..> Profiles.Domain.Model.Aggregates
+Profiles.Application.Internal.QueryServices ..> Profiles.Domain.Services
+Profiles.Application.Internal.QueryServices ..> Profiles.Infrastructure.Persistence.JPA
+Profiles.Application.Internal.QueryServices ..> Profiles.Domain.Model.Queries
+Profiles.Interfaces.Rest.Controllers ..> Profiles.Interfaces.Rest.Resources
+Profiles.Interfaces.Rest.Controllers ..> Profiles.Interfaces.Rest.Transform
+Profiles.Interfaces.Rest.Controllers ..> Profiles.Domain.Model.Aggregates
+Profiles.Interfaces.Rest.Controllers ..> Profiles.Domain.Model.Commands
+Profiles.Interfaces.Rest.Controllers ..> Profiles.Domain.Model.Queries
+Profiles.Interfaces.Rest.Controllers ..> Profiles.Application.Internal.CommandServices
+Profiles.Interfaces.Rest.Controllers ..> Profiles.Application.Internal.QueryServices
+
+' === RELACIONES DE SERVICES ===
+Services.Domain.Model.Aggregates ..> org.springframework.data.domain
+Services.Domain.Model.Aggregates ..> Services.Domain.Model.ValueObjects
+Services.Application.Internal.CommandServices ..> Services.Domain.Services
+Services.Application.Internal.CommandServices ..> Services.Infrastructure.Persistence.JPA
+Services.Application.Internal.CommandServices ..> Services.Domain.Model.Commands
+Services.Application.Internal.CommandServices ..> Services.Domain.Model.Aggregates
+Services.Application.Internal.QueryServices ..> Services.Domain.Services
+Services.Application.Internal.QueryServices ..> Services.Infrastructure.Persistence.JPA
+Services.Application.Internal.QueryServices ..> Services.Domain.Model.Queries
+Services.Interfaces.Rest.Controllers ..> Services.Interfaces.Rest.Resources
+Services.Interfaces.Rest.Controllers ..> Services.Interfaces.Rest.Transform
+Services.Interfaces.Rest.Controllers ..> Services.Domain.Model.Aggregates
+Services.Interfaces.Rest.Controllers ..> Services.Domain.Model.Commands
+Services.Interfaces.Rest.Controllers ..> Services.Domain.Model.Queries
+Services.Interfaces.Rest.Controllers ..> Services.Application.Internal.CommandServices
+Services.Interfaces.Rest.Controllers ..> Services.Application.Internal.QueryServices
+
+' === RELACIONES DE REVIEWS ===
+Reviews.Domain.Model.Aggregates ..> org.springframework.data.domain
+Reviews.Domain.Model.Aggregates ..> Reviews.Domain.Model.ValueObjects
+Reviews.Application.Internal.CommandServices ..> Reviews.Domain.Services
+Reviews.Application.Internal.CommandServices ..> Reviews.Infrastructure.Persistence.JPA
+Reviews.Application.Internal.CommandServices ..> Reviews.Domain.Model.Commands
+Reviews.Application.Internal.CommandServices ..> Reviews.Domain.Model.Aggregates
+Reviews.Application.Internal.QueryServices ..> Reviews.Domain.Services
+Reviews.Application.Internal.QueryServices ..> Reviews.Infrastructure.Persistence.JPA
+Reviews.Application.Internal.QueryServices ..> Reviews.Domain.Model.Queries
+Reviews.Interfaces.Rest.Controllers ..> Reviews.Interfaces.Rest.Resources
+Reviews.Interfaces.Rest.Controllers ..> Reviews.Interfaces.Rest.Transform
+Reviews.Interfaces.Rest.Controllers ..> Reviews.Domain.Model.Aggregates
+Reviews.Interfaces.Rest.Controllers ..> Reviews.Domain.Model.Commands
+Reviews.Interfaces.Rest.Controllers ..> Reviews.Domain.Model.Queries
+Reviews.Interfaces.Rest.Controllers ..> Reviews.Application.Internal.CommandServices
+Reviews.Interfaces.Rest.Controllers ..> Reviews.Application.Internal.QueryServices
+
+' === RELACIONES DE RESERVATIONS ===
+Reservations.Domain.Model.Aggregates ..> org.springframework.data.domain
+Reservations.Domain.Model.Aggregates ..> Reservations.Domain.Model.ValueObjects
+Reservations.Application.Internal.CommandServices ..> Reservations.Domain.Services
+Reservations.Application.Internal.CommandServices ..> Reservations.Infrastructure.Persistence.JPA
+Reservations.Application.Internal.CommandServices ..> Reservations.Domain.Model.Commands
+Reservations.Application.Internal.CommandServices ..> Reservations.Domain.Model.Aggregates
+Reservations.Application.Internal.QueryServices ..> Reservations.Domain.Services
+Reservations.Application.Internal.QueryServices ..> Reservations.Infrastructure.Persistence.JPA
+Reservations.Application.Internal.QueryServices ..> Reservations.Domain.Model.Queries
+Reservations.Interfaces.Rest.Controllers ..> Reservations.Interfaces.Rest.Resources
+Reservations.Interfaces.Rest.Controllers ..> Reservations.Interfaces.Rest.Transform
+Reservations.Interfaces.Rest.Controllers ..> Reservations.Domain.Model.Aggregates
+Reservations.Interfaces.Rest.Controllers ..> Reservations.Domain.Model.Commands
+Reservations.Interfaces.Rest.Controllers ..> Reservations.Domain.Model.Queries
+Reservations.Interfaces.Rest.Controllers ..> Reservations.Application.Internal.CommandServices
+Reservations.Interfaces.Rest.Controllers ..> Reservations.Application.Internal.QueryServices
+
+' === RELACIONES DE WORKERS ===
+Workers.Domain.Model.Aggregates ..> org.springframework.data.domain
+Workers.Domain.Model.Aggregates ..> Workers.Domain.Model.ValueObjects
+Workers.Application.Internal.CommandServices ..> Workers.Domain.Services
+Workers.Application.Internal.CommandServices ..> Workers.Infrastructure.Persistence.JPA
+Workers.Application.Internal.CommandServices ..> Workers.Domain.Model.Commands
+Workers.Application.Internal.CommandServices ..> Workers.Domain.Model.Aggregates
+Workers.Application.Internal.QueryServices ..> Workers.Domain.Services
+Workers.Application.Internal.QueryServices ..> Workers.Infrastructure.Persistence.JPA
+Workers.Application.Internal.QueryServices ..> Workers.Domain.Model.Queries
+Workers.Interfaces.Rest.Controllers ..> Workers.Interfaces.Rest.Resources
+Workers.Interfaces.Rest.Controllers ..> Workers.Interfaces.Rest.Transform
+Workers.Interfaces.Rest.Controllers ..> Workers.Domain.Model.Aggregates
+Workers.Interfaces.Rest.Controllers ..> Workers.Domain.Model.Commands
+Workers.Interfaces.Rest.Controllers ..> Workers.Domain.Model.Queries
+Workers.Interfaces.Rest.Controllers ..> Workers.Application.Internal.CommandServices
+Workers.Interfaces.Rest.Controllers ..> Workers.Application.Internal.QueryServices
+
+' === RELACIÓN DE SHARED ===
+Shared.Infrastructure.Persistence.JPA.Strategy ..> org.hibernate.boot.model.naming
+
+@enduml

@@ -1,0 +1,29 @@
+@startuml
+package "Shared" {
+    package "Infrastructure" {
+        package "Persistence" {
+            package "jpa" {
+                class SnakeCasePhysicalNamingStrategy <<Class>>
+            }
+        }
+    }
+    package "Domain" {
+        package "Model" {
+            package "Entity" {
+                class Money {
+                    -money: Money
+                }
+            }
+            package "ValueObjects" {
+                class Money <<ValueObject>> {
+                    currency: string
+                    amount: long
+                }
+            }
+        }
+    }
+}
+
+
+
+@enduml

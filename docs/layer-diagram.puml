@@ -1,0 +1,109 @@
+@startuml
+skinparam packageStyle rectangle
+
+package "Profiles" {
+    package "Domain" {
+    }
+    package "Application" {
+    }
+    package "Infrastructure" {
+    }
+    package "Interfaces" {
+    }
+}
+
+package "Services" {
+    package "Domain" {
+    }
+    package "Application" {
+    }
+    package "Infrastructure" {
+    }
+    package "Interfaces" {}
+}
+
+package "Reviews" {
+    package "Domain" {
+    }
+    package "Application" {
+    }
+    package "Infrastructure" {
+    }
+    package "Interfaces" {
+    }
+}
+
+package "Reservations" {
+    package "Domain" {
+    }
+    package "Application" {
+    }
+    package "Infrastructure" {
+    }
+    package "Interfaces" {
+    }
+}
+
+package "Shared" {
+    package "Infrastructure" {
+    }
+}
+
+package "Workers" {
+    package "Domain" {
+    }
+    package "Application" {
+    }
+    package "Infrastructure" {
+    }
+    package "Interfaces" {
+    }
+}
+
+package org.springframework.data.domain {}
+package org.hibernate.boot.model.naming {}
+
+"Profiles.Domain" ..> org.springframework.data.domain
+"Services.Domain" ..> org.springframework.data.domain
+"Reviews.Domain" ..> org.springframework.data.domain
+"Reservations.Domain" ..> org.springframework.data.domain
+"Workers.Domain" ..> org.springframework.data.domain
+
+"Profiles.Infrastructure" ..> "Profiles.Domain"
+"Services.Infrastructure" ..> "Services.Domain"
+"Reviews.Infrastructure" ..> "Reviews.Domain"
+"Reservations.Infrastructure" ..> "Reservations.Domain"
+"Workers.Infrastructure" ..> "Workers.Domain"
+
+"Profiles.Application" ..> "Profiles.Domain"
+"Services.Application" ..> "Services.Domain"
+"Reviews.Application" ..> "Reviews.Domain"
+"Reservations.Application" ..> "Reservations.Domain"
+"Workers.Application" ..> "Workers.Domain"
+
+"Profiles.Application" ..> "Profiles.Infrastructure"
+"Services.Application" ..> "Services.Infrastructure"
+"Reviews.Application" ..> "Reviews.Infrastructure"
+"Reservations.Application" ..> "Reservations.Infrastructure"
+"Workers.Application" ..> "Workers.Infrastructure"
+
+
+"Profiles.Interfaces" ..> "Profiles.Domain"
+"Profiles.Interfaces" ..> "Profiles.Application"
+
+"Services.Interfaces" ..> "Services.Domain"
+"Services.Interfaces" ..> "Services.Application"
+
+"Reviews.Interfaces" ..> "Reviews.Domain"
+"Reviews.Interfaces" ..> "Reviews.Application"
+
+"Reservations.Interfaces" ..> "Reservations.Domain"
+"Reservations.Interfaces" ..> "Reservations.Application"
+
+"Workers.Interfaces" ..> "Workers.Domain"
+"Workers.Interfaces" ..> "Workers.Application"
+
+
+"Shared.Infrastructure" ..> org.hibernate.boot.model.naming
+
+@enduml

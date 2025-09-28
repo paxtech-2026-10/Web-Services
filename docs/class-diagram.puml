@@ -1,0 +1,1146 @@
+@startuml uTime Backend
+skinparam packageStyle rectangle
+
+package "Profiles" {
+    package "Domain" {
+        package "Model" {
+            package "Aggregates" {
+                class Clients {
+                    -birth_date: ClientBirthDate
+                    -fullName: FullName     
+                    -userId: UserId               
+                }
+
+                class Providers {
+                    -providerProfilesId: ProviderProfilesId
+                    -imageUrl: ProviderImageUrl
+                    -location: ProviderLocation
+                }
+                
+                class Users <<AggregateRoot>> {
+                    email: Email
+                    password: Password
+                }
+
+                class Socials {
+                    -socialData: SocialData
+                }
+                class Provider_Profiles {
+                    -profileImageUrl: ProfileImageUrl
+                    -coverImageUrl: CoverImageUrl
+                }
+                class Portfolio_Images {
+                    -providerId: ProviderId
+                    -imageUrl: ImageUrl
+                }
+            }
+
+            package "Commands" {
+                class CreateClientCommand <<Record>>
+                class CreateProviderCommand <<Record>>
+                class CreateProviderProfiles <<Record>>
+                class CreatePortfolioImagesCommand <<Record>>
+                class CreateSocialsCommand <<Record>>
+            }
+            package "Queries" {
+                class GetAllClientsQuery <<Record>>
+                class GetAllProvidersQuery <<Record>>
+                class GetClientsByIdQuery <<Record>>
+                class GetProviderByEmailQuery <<Record>>
+                class GetProviderByIdQuery <<Record>>
+            }
+            package "ValueObjects"{
+                class UserId <<ValueObject>> {
+                    -id: long
+                }
+                class ProviderId <<ValueObject>> {
+                    -id: long
+                }
+
+                class FullName <<ValueObject>> {
+                    -firstName: String
+                    -lastName: String
+                    --
+                    +getFullName(): String
+                    +getFirstName(): String
+                    +getLastName(): String
+                }
+                class ProviderImageUrl <<ValueObject>> {
+                    -url: String
+                }
+                class ProviderLocation <<ValueObject>> {
+                    -location: String
+                }
+                class Contact <<ValueObject>> {
+                    -phoneNumber: String
+                    -email: String
+                }
+                class PasswordHash <<ValueObject>> {
+                    -passwordHash: String
+                }
+                
+                class SocialId <<ValueObject>> {
+                    -id: long
+                }
+                class SocialData <<ValueObject>> {
+                    -socialUrl: String
+                    -socialIcon: String
+                    --
+                    +getSocialUrl(): String
+                    +getSocialIcon(): String
+                }
+                class ProviderProfilesId <<ValueObject>> {
+                    -providerProfilesId: long
+                }
+                class ProfileImageUrl <<ValueObject>> {
+                    -profileImageUrl: String
+                }
+                class CoverImageUrl <<ValueObject>> {
+                    -coverImageUrl: String
+                }
+                class PortfolioImagesId <<ValueObject>> {
+                    -portfolioImagesId: long
+                }
+                class ImageUrl <<ValueObject>> {
+                    -imageUrl: String
+                }
+                class CompanyName <<ValueObject>> {
+                    -companyName: String
+                }
+            }
+        }
+        package "Services" {
+            class ClientCommandService <<Interface>> {
+                +Optional<Clients> handle(CreateClientCommand command)
+            }
+            class ClientsQueryService <<Interface>> {
+                +List<Clients> handle(GetAllClientsQuery query)
+                +Optional<Clients> handle(GetClientsByIdQuery query)
+            }
+            class ProviderCommandService <<Interface>> {
+                +Optional<Clients> handle(CreateProviderCommand command)
+            }
+            class ProvidersQueryService <<Interface>> {
+                +List<Providers> handle(GetAllProvidersQuery query)
+                +Optional<Clients> handle(GetProvidersByIdQuery query)
+                +Optional<Clients> handle(GetClientsByEmailQuery query)
+            }
+            class ProviderProfilesCommandService <<Interface>> {
+                +Optional<Clients> handle(CreateProviderProfiles command)
+            }
+            class ProviderProfilesQueryService <<Interface>> {
+                +List<Provider_Profiles> handle(GetAllProviderProfilesQuery query)
+                +Optional<Provider_Profiles> handle(GetProviderProfileByIdQuery query)
+            }
+            class PortfolioImagesCommandService <<Interface>> {
+                +Optional<Clients> handle(CreatePortfolioImagesCommand command)
+            }
+            class PortfolioImagesQueryService <<Interface>> {
+                +List<Portfolio_Images> handle(GetAllPortfolioImagesQuery query)
+                +Optional<Portfolio_Images> handle(GetPortfolioImageByIdQuery query)
+            }
+            class SocialsCommandService <<Interface>> {
+                +Optional<Clients> handle(CreateSocialsCommand command)
+            }
+            class SocialsQueryService <<Interface>> {
+                +List<Socials> handle(GetAllSocialsQuery query)
+                +Optional<Socials> handle(GetSocialByIdQuery query)
+            }
+        }
+    }
+    package "Application" {
+        package "Internal" {
+            package CommandServices {
+                class ClientCommandServiceImpl {
+                    -ClientRepository: clientRepository
+                    --
+                    +ClientCommandServiceImpl(ClientRepository clientRepository)
+                    +Optional<Clients> handle (CreateClientCommand command)
+                }
+                class ProviderCommandServiceImpl {
+                    -ProviderRepository: providerRepository
+                    --
+                    +ProviderCommandServiceImpl(ProviderRepository providerRepository)
+                    +Optional<Clients> handle (CreateProviderCommand command)
+                }
+                class ProviderProfilesCommandServiceImpl {
+                    -ProviderRepository: providerRepository
+                    --
+                    +ProviderProfilesCommandServiceImpl(ProviderRepository providerRepository)
+                    +Optional<Clients> handle (CreateProviderProfiles command)
+                }
+                class PortfolioImagesCommandServiceImpl {
+                    -ProviderRepository: providerRepository
+                    --
+                    +PortfolioImagesCommandServiceImpl(ProviderRepository providerRepository)
+                    +Optional<Clients> handle (CreatePortfolioImagesCommand command)
+                }
+                class SocialsCommandServiceImpl {
+                    -ProviderRepository: providerRepository
+                    --
+                    +SocialsCommandServiceImpl(ProviderRepository providerRepository)
+                    +Optional<Clients> handle (CreateSocialsCommand command)
+                }
+            }
+            package QueryServices {
+                class ClientsQueryServiceImpl {
+                    -ClientRepository: clientRepository
+                    --
+                    +List<Clients> handle(GetAllClientsQuery query)
+                    +Optional<Clients> handle(GetClientsByIdQuery query)
+                }
+                class ProvidersQueryServiceImpl {
+                    -ProviderRepository: providerRepository
+                    --
+                    +List<Providers> handle(GetAllProvidersQuery query)
+                    +Optional<Clients> handle(GetProvidersByIdQuery query)
+                    +Optional<Clients> handle(GetClientsByEmailQuery query)
+                }
+            }
+        }
+    }
+    package "Infrastructure" {
+        package "Persistence" {
+            package "jpa" {
+                class ClientRepository <<Interface>> {
+                    
+                }
+                class ProviderRepository <<Interface>> {
+
+                }
+
+            }
+        }
+    }
+    package "Interfaces" {
+        package "Rest" {
+            package "Controllers" {
+                class ClientController {
+                    -ClientCommandService: clientRepository
+                    -ClientsQueryService: clientQueryService
+                    --
+                    +ResponseEntity<ClientResource>: createClient()
+                    +ResponseEntity<ClientResource>: getClientByIdPath()
+                    +ResponseEntity<?>: getClients()
+                    +ResponseEntity<ClientResource>: getClientById()
+                    +ResponseEntity<List<ClientResource>>: getAllClients()
+                }
+                class ProvidersController {
+                    -ProvidersCommandService: providerRepository
+                    -ProviderQueryService: providerQueryService
+                    --
+                    +ResponseEntity<ProviderResource>: createProvider()
+                    +ResponseEntity<ProviderResource>: getProviderByIdPath()
+                    +ResponseEntity<?>: getProviderWithParameters()
+                    +ResponseEntity<ProviderResource>: getProviderById()
+                    +ResponseEntity<ProviderResource>: getProviderByEmail()
+                    +ResponseEntity<List<ProviderResource>>: getAllProviders()
+                }
+                class ProviderProfilesController {
+                    -ProviderProfilesCommandService: providerProfilesCommandService
+                    -ProviderProfilesQueryService: providerProfilesQueryService
+                    --
+                    +ResponseEntity<ProviderProfilesResource>: createProviderProfile()
+                    +ResponseEntity<ProviderProfilesResource>: getProviderProfileByIdPath()
+                    +ResponseEntity<?>: getProviderProfileWithParameters()
+                    +ResponseEntity<ProviderProfilesResource>: getProviderProfileById()
+                    +ResponseEntity<List<ProviderProfilesResource>>: getAllProviderProfiles()
+                }
+                class PortfolioImagesController {
+                    -PortfolioImagesCommandService: portfolioImagesCommandService
+                    -PortfolioImagesQueryService: portfolioImagesQueryService
+                    --
+                    +ResponseEntity<PortfolioImagesResource>: createPortfolioImage()
+                    +ResponseEntity<PortfolioImagesResource>: getPortfolioImageByIdPath()
+                    +ResponseEntity<?>: getPortfolioImageWithParameters()
+                    +ResponseEntity<PortfolioImagesResource>: getPortfolioImageById()
+                    +ResponseEntity<List<PortfolioImagesResource>>: getAllPortfolioImages()
+                }
+                class SocialsController {
+                    -SocialsCommandService: socialsCommandService
+                    -SocialsQueryService: socialsQueryService
+                    --
+                    +ResponseEntity<SocialsResource>: createSocial()
+                    +ResponseEntity<SocialsResource>: getSocialByIdPath()
+                    +ResponseEntity<?>: getSocialWithParameters()
+                    +ResponseEntity<SocialsResource>: getSocialById()
+                    +ResponseEntity<List<SocialsResource>>: getAllSocials()
+                }
+            }
+            package "Resources" {
+                class ClientResource <<Record>> {}
+                class CreateClientResource <<Record>> {}
+                class CreateProviderCommand <<Record>> {}
+                class ProviderResource <<Record>> {}
+            }
+            package "Assembler" {
+                class ClientResourceFrontEntityAssembler {
+                    +ClientResource: toResourceFromEntity()
+                }
+                class CreateClientCommandFromResourceAssembler {
+                    +CreateClientCommand: toCommandFromResource()
+                }
+                class CreateProviderCommandFromResourceAssembler {
+                    +CreateProviderCommand: toCommandFromResource()
+                }
+                class ProviderResourceFromEntityAssembler {
+                    +ProviderResource: toResourceFromEntity()
+                }
+                class ProviderProfilesResourceFromEntityAssembler {
+                    +ProviderProfilesResource: toResourceFromEntity()
+                }
+                class CreateProviderProfilesCommandFromResourceAssembler {
+                    +CreateProviderProfilesCommand: toCommandFromResource()
+                }
+                class PortfolioImagesResourceFromEntityAssembler {
+                    +PortfolioImagesResource: toResourceFromEntity()
+                }
+                class CreatePortfolioImagesCommandFromResourceAssembler {
+                    +CreatePortfolioImagesCommand: toCommandFromResource()
+                }
+                class SocialsResourceFromEntityAssembler {
+                    +SocialsResource: toResourceFromEntity()
+                }
+                class CreateSocialsFromResourceAssembler {
+                    +CreateSocials: toCommandFromResource()
+                }
+            }
+        }
+    }
+}
+
+package "Services" {
+    package "Domain" {
+        package "Model" {
+            package "Aggregates" {
+                class Services {
+                    -providerId: providerId
+                    -serviceDetails: ServiceDetails
+                    -serviceName: ServiceName
+                    -duration: Duration
+                    -price: Money
+                    -status: Status
+                }
+            }
+
+            package "ValueObjects" {
+                class ProviderId <<ValueObject>> {
+                    -id: long
+                }
+                class ServiceDetails <<ValueObject>>{
+                    -serviceDetails: long
+                }
+                class ServiceName <<ValueObject>> {
+                    -serviceName: long
+                }
+                class Duration <<ValueObject>> {
+                    -duration: Int
+                }
+                class Status <<ValueObject>> {
+                    -status: Boolean
+                }
+            }
+
+            package "Commands" {
+                class CreateServiceCommand <<Record>> {}
+                class UpdateServiceCommand <<Record>> {}
+            }
+            package "Queries" {
+                class GetAllServicesQuery <<Record>> {}
+                class GetServiceByIdQuery <<Record>> {}
+                class GetServicesByProviderIdQuery <<Record>> {}
+            }
+        }
+        package "Services" {
+            class ServiceCommandService <<Interface>> {
+                +Optional<Services> handle(CreateServiceCommand command)
+                +Optional<Services> handle(UpdateServiceCommand command)
+            }
+            class ServicesQueryService <<Interface>> {
+                +List<Services> handle(GetAllServicesQuery query)
+                +Optional<Services> handle(GetServiceByIdQuery query)
+                +List<Services> handle(GetServicesByProviderIdQuery query)
+            }
+        }
+
+        package "Exeptions" {
+            class ProviderNotFoundException <<Exception>> {
+                +ProviderNotFoundException(providerId)
+            }
+        }
+    }
+    package "Application" {
+        package "Internal" {
+            package CommandServices {
+                class ServiceCommandServiceImpl {
+                    -ServiceRepository: serviceRepository
+                    --
+                    +Optional<Services> handle(CreateServiceCommand command)
+                    +Optional<Services> handle(UpdateServiceCommand command)
+                }
+            }
+            package QueryServices {
+                class ServicesQueryServiceImpl {
+                    -ServiceRepository: serviceRepository
+                    --
+                    +List<Services> handle(GetAllServicesQuery query)
+                    +Optional<Services> handle(GetServiceByIdQuery query)
+                    +List<Services> handle(GetServicesByProviderIdQuery query)
+                }
+            }
+        }
+    }
+    package "Infrastructure" {
+        package "Persistence" {
+            package "jpa" {
+                class ServiceRepository <<Interface>> {}
+            }
+        }
+    }
+    package "Interfaces" {
+        package "Rest" {
+            package "Controllers" {
+                class ServiceController {
+                    -ServiceCommandService: serviceCommandService
+                    -ServicesQueryService: servicesQueryService
+                    --
+                    +ResponseEntity<ServiceResource>: createService()
+                    +ResponseEntity<ServiceResource>: updateService()
+                    +ResponseEntity<?>: getServicesWithParameters()
+                    +ResponseEntity<ServiceResource>: getServiceById()
+                    +ResponseEntity<List<ServiceResource>>: getAllServices()
+                }
+            }
+            package "Resources" {
+                class ServiceResource <<Record>> {}
+                class CreateServiceCommand <<Record>> {}
+                class UpdateServiceCommand <<Record>> {}
+            }
+            package "Assembler" {
+                class ServiceResourceFromEntityAssembler {
+                    +ServiceResource: toResourceFromEntity()
+                }
+                class CreateServiceCommandFromResourceAssembler {
+                    +CreateServiceCommand: toCommandFromResource()
+                }
+                class UpdateServiceCommandFromResourceAssembler {
+                    +UpdateServiceCommand: toCommandFromResource()
+                }
+            }
+        }
+    }
+}
+
+package "Reviews" {
+    package "Domain" {
+        package "Model" {
+            package "Aggregates" {
+                class Reviews {
+                    -provider_id: ProviderId
+                    -client_id: ClientId
+                    -review: Review
+                }
+            }
+
+            package "ValueObjects" {
+                class ProviderId <<ValueObject>> {
+                    -id: long
+                }
+                class ClientId <<ValueObject>> {
+                    -id: long
+                }
+                class Review <<ValueObject>> {
+                    -review: String
+                    -rating: int
+                    -read: boolean
+                }
+            }
+
+            package "Exceptions" {
+                class ReviewNotFoundException <<Exception>> {
+                    +ReviewNotFoundException(reviewId)
+                }
+            }
+
+            package "Commands" {
+                class CreateReviewCommand <<Record>> {}
+                class UpdateReviewCommand <<Record>> {}
+            }
+            package "Queries" {
+                class GetAllReviewsQuery <<Record>> {}
+                class GetReviewByIdQuery <<Record>> {}
+                class GetReviewsByProviderIdQuery <<Record>> {}
+                class GetReviewsByClientIdQuery <<Record>> {}
+            }
+        }
+        package "Services" {
+            class ReviewCommandService <<Interface>> {
+                +Optional<Reviews> handle(CreateReviewCommand command)
+                +Optional<Reviews> handle(UpdateReviewCommand command)
+            }
+            class ReviewsQueryService <<Interface>> {
+                +List<Reviews> handle(GetAllReviewsQuery query)
+                +Optional<Reviews> handle(GetReviewByIdQuery query)
+                +List<Reviews> handle(GetReviewsByProviderIdQuery query)
+                +List<Reviews> handle(GetReviewsByClientIdQuery query)
+            }
+        }
+    }
+    package "Application" {
+        package "Internal" {
+            package CommandServices {
+                class ReviewCommandServiceImpl {
+                    -ReviewRepository: reviewRepository
+                    --
+                    +Optional<Reviews> handle(CreateReviewCommand command)
+                    +Optional<Reviews> handle(UpdateReviewCommand command)
+                }
+            }
+            package QueryServices {
+                class ReviewsQueryServiceImpl {
+                    -ReviewRepository: reviewRepository
+                    --
+                    +List<Reviews> handle(GetAllReviewsQuery query)
+                    +Optional<Reviews> handle(GetReviewByIdQuery query)
+                    +List<Reviews> handle(GetReviewsByProviderIdQuery query)
+                    +List<Reviews> handle(GetReviewsByClientIdQuery query)
+                }
+            }
+        }
+    }
+    package "Infrastructure" {
+        package "Persistence" {
+            package "jpa" {
+                class ReviewRepository <<Interface>> {}
+            }
+        }
+    }
+    package "Interfaces" {
+        package "Rest" {
+            package "Controllers" {
+                class ReviewController {
+                    -ReviewCommandService: reviewCommandService
+                    -ReviewsQueryService: reviewsQueryService
+                    --
+                    +ResponseEntity<ReviewResource>: createReview()
+                    +ResponseEntity<ReviewResource>: updateReview()
+                    +ResponseEntity<?>: getReviewsWithParameters()
+                    +ResponseEntity<ReviewResource>: getReviewById()
+                    +ResponseEntity<List<ReviewResource>>: getAllReviews()
+                }
+            }
+            package "Resources" {
+                class ReviewResource <<Record>> {}
+                class CreateReviewCommand <<Record>> {}
+                class UpdateReviewCommand <<Record>> {}
+            }
+            package "Assembler" {
+                class ReviewResourceFromEntityAssembler {
+                    +ReviewResource: toResourceFromEntity()
+                }
+                class CreateReviewCommandFromResourceAssembler {
+                    +CreateReviewCommand: toCommandFromResource()
+                }
+                class UpdateReviewCommandFromResourceAssembler {
+                    +UpdateReviewCommand: toCommandFromResource()
+                }
+            }
+        }
+        package "acl" {
+            class ReviewsContextFacadeImpl {}
+        }
+    }
+}
+
+package "Reservations" {
+    package "Domain" {
+        package "Model" {
+            package "Aggregates" {
+                class Reservations {
+                    -client_id: ClientId
+                    -service_id: ServiceId
+                    -provider_id: ProviderId
+                    -payment_id: PaymentId
+                    -time_slot_id: TimeSlotId
+                    -worker_id: WorkerId
+                }
+            }
+            package "ValueObjects" {
+                class ClientId <<ValueObject>> {
+                    -id: long
+                }
+                class ServiceId <<ValueObject>> {
+                    -id: long
+                }
+                class PaymentId <<ValueObject>> {
+                    -id: long
+                }
+                class TimeSlotId <<ValueObject>> {
+                    -id: long
+                }
+                class WorkerId <<ValueObject>> {
+                    -id: String
+                }
+            }
+            package "Commands" {
+                class CreateReservationCommand <<Record>> {}
+                class UpdateReservationCommand <<Record>> {}
+            }
+            package "Queries" {
+                class GetAllReservationsQuery <<Record>> {}
+                class GetReservationByIdQuery <<Record>> {}
+                class GetReservationsByClientIdQuery <<Record>> {}
+                class GetReservationsByProviderIdQuery <<Record>> {}
+            }
+        }
+        package "Services" {
+            class ReservationCommandService <<Interface>> {
+                +Optional<Reservations> handle(CreateReservationCommand command)
+                +Optional<Reservations> handle(UpdateReservationCommand command)
+            }
+            class ReservationsQueryService <<Interface>> {
+                +List<Reservations> handle(GetAllReservationsQuery query)
+                +Optional<Reservations> handle(GetReservationByIdQuery query)
+                +List<Reservations> handle(GetReservationsByClientIdQuery query)
+                +List<Reservations> handle(GetReservationsByProviderIdQuery query)
+                +List<Reservations> handle(GetReservationsByWorkerIdQuery query)
+            }
+        }
+    }
+    package "Application" {
+        package "Internal" {
+            package CommandServices {
+                class ReservationCommandServiceImpl {
+                    -ReservationRepository: reservationRepository
+                    --
+                    +Optional<Reservations> handle(CreateReservationCommand command)
+                    +Optional<Reservations> handle(UpdateReservationCommand command)
+                }
+            }
+            package QueryServices {
+                class ReservationsQueryServiceImpl {
+                    -ReservationRepository: reservationRepository
+                    --
+                    +List<Reservations> handle(GetAllReservationsQuery query)
+                    +Optional<Reservations> handle(GetReservationByIdQuery query)
+                    +List<Reservations> handle(GetReservationsByClientIdQuery query)
+                    +List<Reservations> handle(GetReservationsByProviderIdQuery query)
+                    +List<Reservations> handle(GetReservationsByWorkerIdQuery query)
+                }
+            }
+        }
+    }
+    package "Infrastructure" {
+        package "Persistence" {
+            package "jpa" {
+                class ReservationRepository <<Interface>> {}
+            }
+        }
+    }
+    package "Interfaces" {
+        package "Rest" {
+            package "Controllers" {
+                class ReservationController {
+                    -ReservationCommandService: reservationCommandService
+                    -ReservationsQueryService: reservationsQueryService
+                    --
+                    +ResponseEntity<ReservationResource>: createReservation()
+                    +ResponseEntity<ReservationResource>: updateReservation()
+                    +ResponseEntity<?>: getReservationsWithParameters()
+                    +ResponseEntity<ReservationResource>: getReservationById()
+                    +ResponseEntity<List<ReservationResource>>: getAllReservations()
+                }
+            }
+            package "Resources" {
+                class ReservationResource <<Record>> {}
+                class CreateReservationCommand <<Record>> {}
+                class UpdateReservationCommand <<Record>> {}
+            }
+            package "Assembler" {
+                class ReservationResourceFromEntityAssembler {
+                    +ReservationResource: toResourceFromEntity()
+                }
+                class CreateReservationCommandFromResourceAssembler {
+                    +CreateReservationCommand: toCommandFromResource()
+                }
+                class UpdateReservationCommandFromResourceAssembler {
+                    +UpdateReservationCommand: toCommandFromResource()
+                }
+            }
+        }
+    }
+}
+
+
+
+package "Shared" {
+    package "Infrastructure" {
+        package "Persistence" {
+            package "jpa" {
+                class SnakeCasePhysicalNamingStrategy <<Class>>
+            }
+        }
+    }
+    package "Domain" {
+        package "Model" {
+            package "Entity" {
+                class Money {
+                    -money: Money
+                }
+            }
+            package "ValueObjects" {
+                class Money <<ValueObject>> {
+                    currency: string
+                    amount: long
+                }
+            }
+        }
+    }
+}
+
+package "Workers" {
+    package "Domain" {
+        package "Model" {
+            package "Aggregates" {
+                class Workers {
+                    -name: WorkerName
+                    -specialization: WorkerSpecialization
+                    -photo_url: WorkerPhotoUrl
+                }
+            }
+            package "ValueObjects" {
+                class WorkerName <<ValueObject>> {
+                    -name: String
+                }
+                class WorkerSpecialization <<ValueObject>> {
+                    -specialization: String
+                }
+                class WorkerPhotoUrl <<ValueObject>> {
+                    -photo_url: String
+                }
+            }
+            package "Commands" {
+                class CreateWorkerCommand <<Record>> {}
+                class UpdateWorkerCommand <<Record>> {}
+            }
+            package "Queries" {
+                class GetAllWorkersQuery <<Record>> {}
+                class GetWorkerByIdQuery <<Record>> {}
+                class GetWorkersByProviderIdQuery <<Record>> {}
+            }
+        }
+        package "Services" {
+            class WorkerCommandService <<Interface>> {
+                +Optional<Workers> handle(CreateWorkerCommand command)
+                +Optional<Workers> handle(UpdateWorkerCommand command)
+            }
+            class WorkersQueryService <<Interface>> {
+                +List<Workers> handle(GetAllWorkersQuery query)
+                +Optional<Workers> handle(GetWorkerByIdQuery query)
+                +List<Workers> handle(GetWorkersByProviderIdQuery query)
+            }
+        }
+    }
+    package "Application" {
+        package "Internal" {
+            package CommandServices {
+                class WorkerCommandServiceImpl {
+                    -WorkerRepository: workerRepository
+                    --
+                    +Optional<Workers> handle(CreateWorkerCommand command)
+                    +Optional<Workers> handle(UpdateWorkerCommand command)
+                }
+            }
+            package QueryServices {
+                class WorkersQueryServiceImpl {
+                    -WorkerRepository: workerRepository
+                    --
+                    +List<Workers> handle(GetAllWorkersQuery query)
+                    +Optional<Workers> handle(GetWorkerByIdQuery query)
+                    +List<Workers> handle(GetWorkersByProviderIdQuery query)
+                }
+            }
+        }
+    }
+    package "Infrastructure" {
+        package "Persistence" {
+            package "jpa" {
+                class WorkerRepository <<Interface>> {}
+            }
+        }
+    }
+    package "Interfaces" {
+        package "Rest" {
+            package "Controllers" {
+                class WorkerController {
+                    -WorkerCommandService: workerCommandService
+                    -WorkersQueryService: workersQueryService
+                    --
+                    +ResponseEntity<WorkerResource>: createWorker()
+                    +ResponseEntity<WorkerResource>: updateWorker()
+                    +ResponseEntity<?>: getWorkersWithParameters()
+                    +ResponseEntity<WorkerResource>: getWorkerById()
+                    +ResponseEntity<List<WorkerResource>>: getAllWorkers()
+                }
+            }
+            package "Resources" {
+                class WorkerResource <<Record>> {}
+                class CreateWorkerCommand <<Record>> {}
+                class UpdateWorkerCommand <<Record>> {}
+            }
+            package "Assembler" {
+                class WorkerResourceFromEntityAssembler {
+                    +WorkerResource: toResourceFromEntity()
+                }
+                class CreateWorkerCommandFromResourceAssembler {
+                    +CreateWorkerCommand: toCommandFromResource()
+                }
+                class UpdateWorkerCommandFromResourceAssembler {
+                    +UpdateWorkerCommand: toCommandFromResource()
+                }
+            }
+        }
+    }
+}
+
+' ================================
+' 🔹 RELACIÓN: AGGREGATES → VALUE OBJECTS
+' ================================
+Profiles.Domain.Model.Aggregates.Clients --> Profiles.Domain.Model.ValueObjects.FullName
+Profiles.Domain.Model.Aggregates.Clients --> Profiles.Domain.Model.ValueObjects.UserId
+Profiles.Domain.Model.Aggregates.Clients --> Profiles.Domain.Model.ValueObjects.ClientBirthDate
+
+Profiles.Domain.Model.Aggregates.Providers --> Profiles.Domain.Model.ValueObjects.ProviderProfilesId
+Profiles.Domain.Model.Aggregates.Providers --> Profiles.Domain.Model.ValueObjects.ProviderImageUrl
+Profiles.Domain.Model.Aggregates.Providers --> Profiles.Domain.Model.ValueObjects.ProviderLocation
+
+Profiles.Domain.Model.Aggregates.Users --> Profiles.Domain.Model.ValueObjects.Email
+Profiles.Domain.Model.Aggregates.Users --> Profiles.Domain.Model.ValueObjects.PasswordHash
+
+Profiles.Domain.Model.Aggregates.Socials --> Profiles.Domain.Model.ValueObjects.SocialData
+
+Profiles.Domain.Model.Aggregates.Provider_Profiles --> Profiles.Domain.Model.ValueObjects.ProfileImageUrl
+Profiles.Domain.Model.Aggregates.Provider_Profiles --> Profiles.Domain.Model.ValueObjects.CoverImageUrl
+
+Profiles.Domain.Model.Aggregates.Portfolio_Images --> Profiles.Domain.Model.ValueObjects.ProviderId
+Profiles.Domain.Model.Aggregates.Portfolio_Images --> Profiles.Domain.Model.ValueObjects.ImageUrl
+
+
+' ================================
+' 🔹 RELACIÓN: COMMANDS / QUERIES → AGGREGATES
+' ================================
+Profiles.Domain.Model.Commands.CreateClientCommand --> Profiles.Domain.Model.Aggregates.Clients
+Profiles.Domain.Model.Commands.CreateProviderCommand --> Profiles.Domain.Model.Aggregates.Providers
+Profiles.Domain.Model.Commands.CreateProviderProfiles --> Profiles.Domain.Model.Aggregates.Provider_Profiles
+Profiles.Domain.Model.Commands.CreatePortfolioImagesCommand --> Profiles.Domain.Model.Aggregates.Portfolio_Images
+Profiles.Domain.Model.Commands.CreateSocialsCommand --> Profiles.Domain.Model.Aggregates.Socials
+
+Profiles.Domain.Model.Queries.GetAllClientsQuery --> Profiles.Domain.Model.Aggregates.Clients
+Profiles.Domain.Model.Queries.GetClientsByIdQuery --> Profiles.Domain.Model.Aggregates.Clients
+Profiles.Domain.Model.Queries.GetAllProvidersQuery --> Profiles.Domain.Model.Aggregates.Providers
+Profiles.Domain.Model.Queries.GetProviderByEmailQuery --> Profiles.Domain.Model.Aggregates.Providers
+Profiles.Domain.Model.Queries.GetProviderByIdQuery --> Profiles.Domain.Model.Aggregates.Providers
+
+
+' ================================
+' 🔹 RELACIÓN: DOMAIN SERVICES → COMMANDS / QUERIES
+' ================================
+Profiles.Domain.Services.ClientCommandService --> Profiles.Domain.Model.Commands.CreateClientCommand
+Profiles.Domain.Services.ProviderCommandService --> Profiles.Domain.Model.Commands.CreateProviderCommand
+Profiles.Domain.Services.ProviderProfilesCommandService --> Profiles.Domain.Model.Commands.CreateProviderProfiles
+Profiles.Domain.Services.PortfolioImagesCommandService --> Profiles.Domain.Model.Commands.CreatePortfolioImagesCommand
+Profiles.Domain.Services.SocialsCommandService --> Profiles.Domain.Model.Commands.CreateSocialsCommand
+
+Profiles.Domain.Services.ClientsQueryService --> Profiles.Domain.Model.Queries.GetAllClientsQuery
+Profiles.Domain.Services.ClientsQueryService --> Profiles.Domain.Model.Queries.GetClientsByIdQuery
+Profiles.Domain.Services.ProvidersQueryService --> Profiles.Domain.Model.Queries.GetAllProvidersQuery
+Profiles.Domain.Services.ProvidersQueryService --> Profiles.Domain.Model.Queries.GetProviderByIdQuery
+Profiles.Domain.Services.ProvidersQueryService --> Profiles.Domain.Model.Queries.GetProviderByEmailQuery
+
+
+' ================================
+' 🔹 RELACIÓN: APPLICATION SERVICES IMPL → REPOSITORIES / COMMANDS
+' ================================
+Profiles.Application.Internal.CommandServices.ClientCommandServiceImpl --> Profiles.Infrastructure.Persistence.jpa.ClientRepository
+Profiles.Application.Internal.CommandServices.ClientCommandServiceImpl --> Profiles.Domain.Model.Commands.CreateClientCommand
+
+Profiles.Application.Internal.CommandServices.ProviderCommandServiceImpl --> Profiles.Infrastructure.Persistence.jpa.ProviderRepository
+Profiles.Application.Internal.CommandServices.ProviderCommandServiceImpl --> Profiles.Domain.Model.Commands.CreateProviderCommand
+
+Profiles.Application.Internal.CommandServices.ProviderProfilesCommandServiceImpl --> Profiles.Infrastructure.Persistence.jpa.ProviderRepository
+Profiles.Application.Internal.CommandServices.ProviderProfilesCommandServiceImpl --> Profiles.Domain.Model.Commands.CreateProviderProfiles
+
+Profiles.Application.Internal.CommandServices.PortfolioImagesCommandServiceImpl --> Profiles.Infrastructure.Persistence.jpa.ProviderRepository
+Profiles.Application.Internal.CommandServices.PortfolioImagesCommandServiceImpl --> Profiles.Domain.Model.Commands.CreatePortfolioImagesCommand
+
+Profiles.Application.Internal.CommandServices.SocialsCommandServiceImpl --> Profiles.Infrastructure.Persistence.jpa.ProviderRepository
+Profiles.Application.Internal.CommandServices.SocialsCommandServiceImpl --> Profiles.Domain.Model.Commands.CreateSocialsCommand
+
+Profiles.Application.Internal.QueryServices.ClientsQueryServiceImpl --> Profiles.Infrastructure.Persistence.jpa.ClientRepository
+Profiles.Application.Internal.QueryServices.ClientsQueryServiceImpl --> Profiles.Domain.Model.Queries.GetAllClientsQuery
+Profiles.Application.Internal.QueryServices.ClientsQueryServiceImpl --> Profiles.Domain.Model.Queries.GetClientsByIdQuery
+
+Profiles.Application.Internal.QueryServices.ProvidersQueryServiceImpl --> Profiles.Infrastructure.Persistence.jpa.ProviderRepository
+Profiles.Application.Internal.QueryServices.ProvidersQueryServiceImpl --> Profiles.Domain.Model.Queries.GetAllProvidersQuery
+Profiles.Application.Internal.QueryServices.ProvidersQueryServiceImpl --> Profiles.Domain.Model.Queries.GetProviderByIdQuery
+Profiles.Application.Internal.QueryServices.ProvidersQueryServiceImpl --> Profiles.Domain.Model.Queries.GetProviderByEmailQuery
+
+
+' ================================
+' 🔹 RELACIÓN: CONTROLLERS → SERVICES / COMMANDS / QUERIES / AGGREGATES
+' ================================
+Profiles.Interfaces.Rest.Controllers.ClientController --> Profiles.Domain.Services.ClientCommandService
+Profiles.Interfaces.Rest.Controllers.ClientController --> Profiles.Domain.Services.ClientsQueryService
+Profiles.Interfaces.Rest.Controllers.ClientController --> Profiles.Domain.Model.Commands.CreateClientCommand
+Profiles.Interfaces.Rest.Controllers.ClientController --> Profiles.Domain.Model.Queries.GetAllClientsQuery
+Profiles.Interfaces.Rest.Controllers.ClientController --> Profiles.Domain.Model.Queries.GetClientsByIdQuery
+Profiles.Interfaces.Rest.Controllers.ClientController --> Profiles.Domain.Model.Aggregates.Clients
+
+Profiles.Interfaces.Rest.Controllers.ProvidersController --> Profiles.Domain.Services.ProviderCommandService
+Profiles.Interfaces.Rest.Controllers.ProvidersController --> Profiles.Domain.Services.ProvidersQueryService
+Profiles.Interfaces.Rest.Controllers.ProvidersController --> Profiles.Domain.Model.Commands.CreateProviderCommand
+Profiles.Interfaces.Rest.Controllers.ProvidersController --> Profiles.Domain.Model.Queries.GetAllProvidersQuery
+Profiles.Interfaces.Rest.Controllers.ProvidersController --> Profiles.Domain.Model.Queries.GetProviderByIdQuery
+Profiles.Interfaces.Rest.Controllers.ProvidersController --> Profiles.Domain.Model.Queries.GetProviderByEmailQuery
+Profiles.Interfaces.Rest.Controllers.ProvidersController --> Profiles.Domain.Model.Aggregates.Providers
+
+Profiles.Interfaces.Rest.Controllers.ProviderProfilesController --> Profiles.Domain.Services.ProviderProfilesCommandService
+Profiles.Interfaces.Rest.Controllers.ProviderProfilesController --> Profiles.Domain.Services.ProviderProfilesQueryService
+Profiles.Interfaces.Rest.Controllers.ProviderProfilesController --> Profiles.Domain.Model.Commands.CreateProviderProfiles
+Profiles.Interfaces.Rest.Controllers.ProviderProfilesController --> Profiles.Domain.Model.Aggregates.Provider_Profiles
+
+Profiles.Interfaces.Rest.Controllers.PortfolioImagesController --> Profiles.Domain.Services.PortfolioImagesCommandService
+Profiles.Interfaces.Rest.Controllers.PortfolioImagesController --> Profiles.Domain.Services.PortfolioImagesQueryService
+Profiles.Interfaces.Rest.Controllers.PortfolioImagesController --> Profiles.Domain.Model.Commands.CreatePortfolioImagesCommand
+Profiles.Interfaces.Rest.Controllers.PortfolioImagesController --> Profiles.Domain.Model.Aggregates.Portfolio_Images
+
+Profiles.Interfaces.Rest.Controllers.SocialsController --> Profiles.Domain.Services.SocialsCommandService
+Profiles.Interfaces.Rest.Controllers.SocialsController --> Profiles.Domain.Services.SocialsQueryService
+Profiles.Interfaces.Rest.Controllers.SocialsController --> Profiles.Domain.Model.Commands.CreateSocialsCommand
+Profiles.Interfaces.Rest.Controllers.SocialsController --> Profiles.Domain.Model.Aggregates.Socials
+
+
+' ================================
+' 🔹 RELACIÓN: ASSEMBLERS → COMMANDS / AGGREGATES / RESOURCES
+' ================================
+Profiles.Interfaces.Rest.Assembler.ClientResourceFrontEntityAssembler --> Profiles.Domain.Model.Aggregates.Clients
+Profiles.Interfaces.Rest.Assembler.ClientResourceFrontEntityAssembler --> Profiles.Interfaces.Rest.Resources.ClientResource
+Profiles.Interfaces.Rest.Assembler.CreateClientCommandFromResourceAssembler --> Profiles.Domain.Model.Commands.CreateClientCommand
+Profiles.Interfaces.Rest.Assembler.CreateClientCommandFromResourceAssembler --> Profiles.Interfaces.Rest.Resources.CreateClientResource
+
+Profiles.Interfaces.Rest.Assembler.ProviderResourceFromEntityAssembler --> Profiles.Domain.Model.Aggregates.Providers
+Profiles.Interfaces.Rest.Assembler.ProviderResourceFromEntityAssembler --> Profiles.Interfaces.Rest.Resources.ProviderResource
+Profiles.Interfaces.Rest.Assembler.CreateProviderCommandFromResourceAssembler --> Profiles.Domain.Model.Commands.CreateProviderCommand
+
+Profiles.Interfaces.Rest.Assembler.ProviderProfilesResourceFromEntityAssembler --> Profiles.Domain.Model.Aggregates.Provider_Profiles
+Profiles.Interfaces.Rest.Assembler.CreateProviderProfilesCommandFromResourceAssembler --> Profiles.Domain.Model.Commands.CreateProviderProfiles
+
+Profiles.Interfaces.Rest.Assembler.PortfolioImagesResourceFromEntityAssembler --> Profiles.Domain.Model.Aggregates.Portfolio_Images
+Profiles.Interfaces.Rest.Assembler.CreatePortfolioImagesCommandFromResourceAssembler --> Profiles.Domain.Model.Commands.CreatePortfolioImagesCommand
+
+Profiles.Interfaces.Rest.Assembler.SocialsResourceFromEntityAssembler --> Profiles.Domain.Model.Aggregates.Socials
+Profiles.Interfaces.Rest.Assembler.CreateSocialsFromResourceAssembler --> Profiles.Domain.Model.Commands.CreateSocialsCommand
+
+' === AGGREGATE CON VALUE OBJECTS ===
+Reservations.Domain.Model.Aggregates.Reservations --> Reservations.Domain.Model.ValueObjects.ClientId
+Reservations.Domain.Model.Aggregates.Reservations --> Reservations.Domain.Model.ValueObjects.ServiceId
+Reservations.Domain.Model.Aggregates.Reservations --> Reservations.Domain.Model.ValueObjects.ProviderId
+Reservations.Domain.Model.Aggregates.Reservations --> Reservations.Domain.Model.ValueObjects.PaymentId
+Reservations.Domain.Model.Aggregates.Reservations --> Reservations.Domain.Model.ValueObjects.TimeSlotId
+Reservations.Domain.Model.Aggregates.Reservations --> Reservations.Domain.Model.ValueObjects.WorkerId
+
+' === SERVICES CONECTADOS CON COMMANDS Y QUERIES ===
+Reservations.Domain.Services.ReservationCommandService --> Reservations.Domain.Model.Commands.CreateReservationCommand
+Reservations.Domain.Services.ReservationCommandService --> Reservations.Domain.Model.Commands.UpdateReservationCommand
+Reservations.Domain.Services.ReservationsQueryService --> Reservations.Domain.Model.Queries.GetAllReservationsQuery
+Reservations.Domain.Services.ReservationsQueryService --> Reservations.Domain.Model.Queries.GetReservationByIdQuery
+Reservations.Domain.Services.ReservationsQueryService --> Reservations.Domain.Model.Queries.GetReservationsByClientIdQuery
+Reservations.Domain.Services.ReservationsQueryService --> Reservations.Domain.Model.Queries.GetReservationsByProviderIdQuery
+Reservations.Domain.Services.ReservationsQueryService --> Reservations.Domain.Model.Queries.GetReservationsByWorkerIdQuery
+
+' === IMPL CON REPO Y SERVICIOS ===
+Reservations.Application.Internal.CommandServices.ReservationCommandServiceImpl --> Reservations.Infrastructure.Persistence.jpa.ReservationRepository
+Reservations.Application.Internal.CommandServices.ReservationCommandServiceImpl --> Reservations.Domain.Model.Commands.CreateReservationCommand
+Reservations.Application.Internal.CommandServices.ReservationCommandServiceImpl --> Reservations.Domain.Model.Commands.UpdateReservationCommand
+Reservations.Application.Internal.QueryServices.ReservationsQueryServiceImpl --> Reservations.Infrastructure.Persistence.jpa.ReservationRepository
+Reservations.Application.Internal.QueryServices.ReservationsQueryServiceImpl --> Reservations.Domain.Model.Queries.GetAllReservationsQuery
+Reservations.Application.Internal.QueryServices.ReservationsQueryServiceImpl --> Reservations.Domain.Model.Queries.GetReservationByIdQuery
+Reservations.Application.Internal.QueryServices.ReservationsQueryServiceImpl --> Reservations.Domain.Model.Queries.GetReservationsByClientIdQuery
+Reservations.Application.Internal.QueryServices.ReservationsQueryServiceImpl --> Reservations.Domain.Model.Queries.GetReservationsByProviderIdQuery
+Reservations.Application.Internal.QueryServices.ReservationsQueryServiceImpl --> Reservations.Domain.Model.Queries.GetReservationsByWorkerIdQuery
+
+' === CONTROLLER CON SERVICES ===
+Reservations.Interfaces.Rest.Controllers.ReservationController --> Reservations.Domain.Services.ReservationCommandService
+Reservations.Interfaces.Rest.Controllers.ReservationController --> Reservations.Domain.Services.ReservationsQueryService
+
+' === ASSEMBLERS ===
+Reservations.Interfaces.Rest.Assembler.ReservationResourceFromEntityAssembler --> Reservations.Domain.Model.Aggregates.Reservations
+Reservations.Interfaces.Rest.Assembler.ReservationResourceFromEntityAssembler --> Reservations.Interfaces.Rest.Resources.ReservationResource
+Reservations.Interfaces.Rest.Assembler.CreateReservationCommandFromResourceAssembler --> Reservations.Interfaces.Rest.Resources.CreateReservationCommand
+Reservations.Interfaces.Rest.Assembler.UpdateReservationCommandFromResourceAssembler --> Reservations.Interfaces.Rest.Resources.UpdateReservationCommand
+
+' === AGGREGATE CON VALUE OBJECTS ===
+Reviews.Domain.Model.Aggregates.Reviews --> Reviews.Domain.Model.ValueObjects.ProviderId
+Reviews.Domain.Model.Aggregates.Reviews --> Reviews.Domain.Model.ValueObjects.ClientId
+Reviews.Domain.Model.Aggregates.Reviews --> Reviews.Domain.Model.ValueObjects.Review
+
+' === COMMANDS CON AGGREGATE ===
+Reviews.Domain.Model.Commands.CreateReviewCommand --> Reviews.Domain.Model.Aggregates.Reviews
+Reviews.Domain.Model.Commands.UpdateReviewCommand --> Reviews.Domain.Model.Aggregates.Reviews
+
+' === QUERIES CON AGGREGATE ===
+Reviews.Domain.Model.Queries.GetAllReviewsQuery --> Reviews.Domain.Model.Aggregates.Reviews
+Reviews.Domain.Model.Queries.GetReviewByIdQuery --> Reviews.Domain.Model.Aggregates.Reviews
+Reviews.Domain.Model.Queries.GetReviewsByProviderIdQuery --> Reviews.Domain.Model.Aggregates.Reviews
+Reviews.Domain.Model.Queries.GetReviewsByClientIdQuery --> Reviews.Domain.Model.Aggregates.Reviews
+
+' === SERVICES CON COMANDOS Y CONSULTAS ===
+Reviews.Domain.Services.ReviewCommandService --> Reviews.Domain.Model.Commands.CreateReviewCommand
+Reviews.Domain.Services.ReviewCommandService --> Reviews.Domain.Model.Commands.UpdateReviewCommand
+Reviews.Domain.Services.ReviewsQueryService --> Reviews.Domain.Model.Queries.GetAllReviewsQuery
+Reviews.Domain.Services.ReviewsQueryService --> Reviews.Domain.Model.Queries.GetReviewByIdQuery
+Reviews.Domain.Services.ReviewsQueryService --> Reviews.Domain.Model.Queries.GetReviewsByProviderIdQuery
+Reviews.Domain.Services.ReviewsQueryService --> Reviews.Domain.Model.Queries.GetReviewsByClientIdQuery
+
+' === SERVICE IMPL CON REPOSITORY Y COMANDOS ===
+Reviews.Application.Internal.CommandServices.ReviewCommandServiceImpl --> Reviews.Infrastructure.Persistence.jpa.ReviewRepository
+Reviews.Application.Internal.CommandServices.ReviewCommandServiceImpl --> Reviews.Domain.Model.Commands.CreateReviewCommand
+Reviews.Application.Internal.CommandServices.ReviewCommandServiceImpl --> Reviews.Domain.Model.Commands.UpdateReviewCommand
+
+Reviews.Application.Internal.QueryServices.ReviewsQueryServiceImpl --> Reviews.Infrastructure.Persistence.jpa.ReviewRepository
+Reviews.Application.Internal.QueryServices.ReviewsQueryServiceImpl --> Reviews.Domain.Model.Queries.GetAllReviewsQuery
+Reviews.Application.Internal.QueryServices.ReviewsQueryServiceImpl --> Reviews.Domain.Model.Queries.GetReviewByIdQuery
+Reviews.Application.Internal.QueryServices.ReviewsQueryServiceImpl --> Reviews.Domain.Model.Queries.GetReviewsByProviderIdQuery
+Reviews.Application.Internal.QueryServices.ReviewsQueryServiceImpl --> Reviews.Domain.Model.Queries.GetReviewsByClientIdQuery
+
+' === CONTROLLER CON SERVICIOS Y OBJETOS ===
+Reviews.Interfaces.Rest.Controllers.ReviewController --> Reviews.Domain.Services.ReviewCommandService
+Reviews.Interfaces.Rest.Controllers.ReviewController --> Reviews.Domain.Services.ReviewsQueryService
+Reviews.Interfaces.Rest.Controllers.ReviewController --> Reviews.Domain.Model.Aggregates.Reviews
+Reviews.Interfaces.Rest.Controllers.ReviewController --> Reviews.Domain.Model.Commands.CreateReviewCommand
+Reviews.Interfaces.Rest.Controllers.ReviewController --> Reviews.Domain.Model.Commands.UpdateReviewCommand
+Reviews.Interfaces.Rest.Controllers.ReviewController --> Reviews.Domain.Model.Queries.GetAllReviewsQuery
+Reviews.Interfaces.Rest.Controllers.ReviewController --> Reviews.Domain.Model.Queries.GetReviewByIdQuery
+
+' === ASSEMBLERS ===
+Reviews.Interfaces.Rest.Assembler.ReviewResourceFromEntityAssembler --> Reviews.Interfaces.Rest.Resources.ReviewResource
+Reviews.Interfaces.Rest.Assembler.ReviewResourceFromEntityAssembler --> Reviews.Domain.Model.Aggregates.Reviews
+
+Reviews.Interfaces.Rest.Assembler.CreateReviewCommandFromResourceAssembler --> Reviews.Interfaces.Rest.Resources.CreateReviewCommand
+Reviews.Interfaces.Rest.Assembler.CreateReviewCommandFromResourceAssembler --> Reviews.Domain.Model.Commands.CreateReviewCommand
+
+Reviews.Interfaces.Rest.Assembler.UpdateReviewCommandFromResourceAssembler --> Reviews.Interfaces.Rest.Resources.UpdateReviewCommand
+Reviews.Interfaces.Rest.Assembler.UpdateReviewCommandFromResourceAssembler --> Reviews.Domain.Model.Commands.UpdateReviewCommand
+
+' === AGGREGATE con VALUE OBJECTS ===
+Services.Domain.Model.Aggregates.Services --> Services.Domain.Model.ValueObjects.ProviderId
+Services.Domain.Model.Aggregates.Services --> Services.Domain.Model.ValueObjects.ServiceDetails
+Services.Domain.Model.Aggregates.Services --> Services.Domain.Model.ValueObjects.ServiceName
+Services.Domain.Model.Aggregates.Services --> Services.Domain.Model.ValueObjects.Duration
+Services.Domain.Model.Aggregates.Services --> Services.Domain.Model.ValueObjects.Status
+
+
+' === COMMANDS/QUERIES con AGGREGATE ===
+Services.Domain.Model.Commands.CreateServiceCommand --> Services.Domain.Model.Aggregates.Services
+Services.Domain.Model.Commands.UpdateServiceCommand --> Services.Domain.Model.Aggregates.Services
+
+Services.Domain.Model.Queries.GetAllServicesQuery --> Services.Domain.Model.Aggregates.Services
+Services.Domain.Model.Queries.GetServiceByIdQuery --> Services.Domain.Model.Aggregates.Services
+Services.Domain.Model.Queries.GetServicesByProviderIdQuery --> Services.Domain.Model.Aggregates.Services
+
+Services.Interfaces.Rest.Resources.CreateServiceCommand --> Services.Domain.Model.Commands.CreateServiceCommand
+Services.Interfaces.Rest.Assembler.CreateServiceCommandFromResourceAssembler --> Services.Interfaces.Rest.Resources.CreateServiceCommand
+Services.Interfaces.Rest.Assembler.CreateServiceCommandFromResourceAssembler --> Services.Domain.Model.Commands.CreateServiceCommand
+
+Services.Interfaces.Rest.Resources.UpdateServiceCommand --> Services.Domain.Model.Commands.UpdateServiceCommand
+Services.Interfaces.Rest.Assembler.UpdateServiceCommandFromResourceAssembler --> Services.Interfaces.Rest.Resources.UpdateServiceCommand
+Services.Interfaces.Rest.Assembler.UpdateServiceCommandFromResourceAssembler --> Services.Domain.Model.Commands.UpdateServiceCommand
+
+Services.Interfaces.Rest.Resources.ServiceResource --> Services.Domain.Model.Aggregates.Services
+Services.Interfaces.Rest.Assembler.ServiceResourceFromEntityAssembler --> Services.Interfaces.Rest.Resources.ServiceResource
+Services.Interfaces.Rest.Assembler.ServiceResourceFromEntityAssembler --> Services.Domain.Model.Aggregates.Services
+
+
+' === DOMAIN SERVICES con COMMANDS/QUERIES ===
+Services.Domain.Services.ServiceCommandService --> Services.Domain.Model.Commands.CreateServiceCommand
+Services.Domain.Services.ServiceCommandService --> Services.Domain.Model.Commands.UpdateServiceCommand
+Services.Domain.Services.ServicesQueryService --> Services.Domain.Model.Queries.GetAllServicesQuery
+Services.Domain.Services.ServicesQueryService --> Services.Domain.Model.Queries.GetServiceByIdQuery
+Services.Domain.Services.ServicesQueryService --> Services.Domain.Model.Queries.GetServicesByProviderIdQuery
+
+
+' === SERVICE IMPL con REPOSITORY/COMMANDS ===
+Services.Application.Internal.CommandServices.ServiceCommandServiceImpl --> Services.Infrastructure.Persistence.jpa.ServiceRepository
+Services.Application.Internal.CommandServices.ServiceCommandServiceImpl --> Services.Domain.Model.Commands.CreateServiceCommand
+Services.Application.Internal.CommandServices.ServiceCommandServiceImpl --> Services.Domain.Model.Commands.UpdateServiceCommand
+
+Services.Application.Internal.QueryServices.ServicesQueryServiceImpl --> Services.Infrastructure.Persistence.jpa.ServiceRepository
+Services.Application.Internal.QueryServices.ServicesQueryServiceImpl --> Services.Domain.Model.Queries.GetAllServicesQuery
+Services.Application.Internal.QueryServices.ServicesQueryServiceImpl --> Services.Domain.Model.Queries.GetServiceByIdQuery
+Services.Application.Internal.QueryServices.ServicesQueryServiceImpl --> Services.Domain.Model.Queries.GetServicesByProviderIdQuery
+
+
+' === CONTROLLER con SERVICES ===
+Services.Interfaces.Rest.Controllers.ServiceController --> Services.Domain.Services.ServiceCommandService
+Services.Interfaces.Rest.Controllers.ServiceController --> Services.Domain.Services.ServicesQueryService
+Services.Interfaces.Rest.Controllers.ServiceController --> Services.Domain.Model.Commands.CreateServiceCommand
+Services.Interfaces.Rest.Controllers.ServiceController --> Services.Domain.Model.Commands.UpdateServiceCommand
+Services.Interfaces.Rest.Controllers.ServiceController --> Services.Domain.Model.Queries.GetAllServicesQuery
+Services.Interfaces.Rest.Controllers.ServiceController --> Services.Domain.Model.Queries.GetServiceByIdQuery
+Services.Interfaces.Rest.Controllers.ServiceController --> Services.Domain.Model.Queries.GetServicesByProviderIdQuery
+Services.Interfaces.Rest.Controllers.ServiceController --> Services.Domain.Model.Aggregates.Services
+
+
+' === ASSEMBLER con RESOURCES/COMMANDS/AGGREGATES ===
+Services.Interfaces.Rest.Assembler.ServiceResourceFromEntityAssembler --> Services.Interfaces.Rest.Resources.ServiceResource
+Services.Interfaces.Rest.Assembler.ServiceResourceFromEntityAssembler --> Services.Domain.Model.Aggregates.Services
+
+Services.Interfaces.Rest.Assembler.CreateServiceCommandFromResourceAssembler --> Services.Domain.Model.Commands.CreateServiceCommand
+Services.Interfaces.Rest.Assembler.UpdateServiceCommandFromResourceAssembler --> Services.Domain.Model.Commands.UpdateServiceCommand
+
+   ' === RELACIONES ===
+    Workers.Domain.Model.Aggregates.Workers --> Workers.Domain.Model.ValueObjects.WorkerName
+    Workers.Domain.Model.Aggregates.Workers --> Workers.Domain.Model.ValueObjects.WorkerSpecialization
+    Workers.Domain.Model.Aggregates.Workers --> Workers.Domain.Model.ValueObjects.WorkerPhotoUrl
+
+    Workers.Domain.Model.Commands.CreateWorkerCommand --> Workers.Domain.Model.Aggregates.Workers
+    Workers.Domain.Model.Commands.UpdateWorkerCommand --> Workers.Domain.Model.Aggregates.Workers
+
+    Workers.Domain.Model.Queries.GetAllWorkersQuery --> Workers.Domain.Model.Aggregates.Workers
+    Workers.Domain.Model.Queries.GetWorkerByIdQuery --> Workers.Domain.Model.Aggregates.Workers
+    Workers.Domain.Model.Queries.GetWorkersByProviderIdQuery --> Workers.Domain.Model.Aggregates.Workers
+
+    Workers.Domain.Services.WorkerCommandService --> Workers.Domain.Model.Commands.CreateWorkerCommand
+    Workers.Domain.Services.WorkerCommandService --> Workers.Domain.Model.Commands.UpdateWorkerCommand
+    Workers.Domain.Services.WorkersQueryService --> Workers.Domain.Model.Queries.GetAllWorkersQuery
+    Workers.Domain.Services.WorkersQueryService --> Workers.Domain.Model.Queries.GetWorkerByIdQuery
+    Workers.Domain.Services.WorkersQueryService --> Workers.Domain.Model.Queries.GetWorkersByProviderIdQuery
+
+    Workers.Application.Internal.CommandServices.WorkerCommandServiceImpl --> Workers.Infrastructure.Persistence.jpa.WorkerRepository
+    Workers.Application.Internal.CommandServices.WorkerCommandServiceImpl --> Workers.Domain.Model.Commands.CreateWorkerCommand
+    Workers.Application.Internal.CommandServices.WorkerCommandServiceImpl --> Workers.Domain.Model.Commands.UpdateWorkerCommand
+
+    Workers.Application.Internal.QueryServices.WorkersQueryServiceImpl --> Workers.Infrastructure.Persistence.jpa.WorkerRepository
+    Workers.Application.Internal.QueryServices.WorkersQueryServiceImpl --> Workers.Domain.Model.Queries.GetAllWorkersQuery
+    Workers.Application.Internal.QueryServices.WorkersQueryServiceImpl --> Workers.Domain.Model.Queries.GetWorkerByIdQuery
+    Workers.Application.Internal.QueryServices.WorkersQueryServiceImpl --> Workers.Domain.Model.Queries.GetWorkersByProviderIdQuery
+
+    Workers.Interfaces.Rest.Controllers.WorkerController --> Workers.Domain.Services.WorkerCommandService
+    Workers.Interfaces.Rest.Controllers.WorkerController --> Workers.Domain.Services.WorkersQueryService
+    Workers.Interfaces.Rest.Controllers.WorkerController --> Workers.Domain.Model.Aggregates.Workers
+    Workers.Interfaces.Rest.Controllers.WorkerController --> Workers.Domain.Model.Commands.CreateWorkerCommand
+    Workers.Interfaces.Rest.Controllers.WorkerController --> Workers.Domain.Model.Commands.UpdateWorkerCommand
+    Workers.Interfaces.Rest.Controllers.WorkerController --> Workers.Domain.Model.Queries.GetAllWorkersQuery
+    Workers.Interfaces.Rest.Controllers.WorkerController --> Workers.Domain.Model.Queries.GetWorkerByIdQuery
+    Workers.Interfaces.Rest.Controllers.WorkerController --> Workers.Domain.Model.Queries.GetWorkersByProviderIdQuery
+
+    Workers.Interfaces.Rest.Assembler.WorkerResourceFromEntityAssembler --> Workers.Interfaces.Rest.Resources.WorkerResource
+    Workers.Interfaces.Rest.Assembler.WorkerResourceFromEntityAssembler --> Workers.Domain.Model.Aggregates.Workers
+    Workers.Interfaces.Rest.Assembler.CreateWorkerCommandFromResourceAssembler --> Workers.Domain.Model.Commands.CreateWorkerCommand
+    Workers.Interfaces.Rest.Assembler.UpdateWorkerCommandFromResourceAssembler --> Workers.Domain.Model.Commands.UpdateWorkerCommand
+
+    Workers.Interfaces.Rest.Resources.CreateWorkerCommand --> Workers.Domain.Model.Commands.CreateWorkerCommand
+    Workers.Interfaces.Rest.Resources.UpdateWorkerCommand --> Workers.Domain.Model.Commands.UpdateWorkerCommand
+
+
+@enduml

@@ -1,0 +1,179 @@
+@startuml
+
+
+package "Reviews" {
+    package "Domain" {
+        package "Model" {
+            package "Aggregates" {
+                class Reviews {
+                    -provider_id: ProviderId
+                    -client_id: ClientId
+                    -review: Review
+                }
+            }
+
+            package "ValueObjects" {
+                class ProviderId <<ValueObject>> {
+                    -id: long
+                }
+                class ClientId <<ValueObject>> {
+                    -id: long
+                }
+                class Review <<ValueObject>> {
+                    -review: String
+                    -rating: int
+                    -read: boolean
+                }
+            }
+
+            package "Exceptions" {
+                class ReviewNotFoundException <<Exception>> {
+                    +ReviewNotFoundException(reviewId)
+                }
+            }
+
+            package "Commands" {
+                class CreateReviewCommand <<Record>> {}
+                class UpdateReviewCommand <<Record>> {}
+            }
+            package "Queries" {
+                class GetAllReviewsQuery <<Record>> {}
+                class GetReviewByIdQuery <<Record>> {}
+                class GetReviewsByProviderIdQuery <<Record>> {}
+                class GetReviewsByClientIdQuery <<Record>> {}
+            }
+        }
+        package "Services" {
+            class ReviewCommandService <<Interface>> {
+                +Optional<Reviews> handle(CreateReviewCommand command)
+                +Optional<Reviews> handle(UpdateReviewCommand command)
+            }
+            class ReviewsQueryService <<Interface>> {
+                +List<Reviews> handle(GetAllReviewsQuery query)
+                +Optional<Reviews> handle(GetReviewByIdQuery query)
+                +List<Reviews> handle(GetReviewsByProviderIdQuery query)
+                +List<Reviews> handle(GetReviewsByClientIdQuery query)
+            }
+        }
+    }
+    package "Application" {
+        package "Internal" {
+            package CommandServices {
+                class ReviewCommandServiceImpl {
+                    -ReviewRepository: reviewRepository
+                    --
+                    +Optional<Reviews> handle(CreateReviewCommand command)
+                    +Optional<Reviews> handle(UpdateReviewCommand command)
+                }
+            }
+            package QueryServices {
+                class ReviewsQueryServiceImpl {
+                    -ReviewRepository: reviewRepository
+                    --
+                    +List<Reviews> handle(GetAllReviewsQuery query)
+                    +Optional<Reviews> handle(GetReviewByIdQuery query)
+                    +List<Reviews> handle(GetReviewsByProviderIdQuery query)
+                    +List<Reviews> handle(GetReviewsByClientIdQuery query)
+                }
+            }
+        }
+    }
+    package "Infrastructure" {
+        package "Persistence" {
+            package "jpa" {
+                class ReviewRepository <<Interface>> {}
+            }
+        }
+    }
+    package "Interfaces" {
+        package "Rest" {
+            package "Controllers" {
+                class ReviewController {
+                    -ReviewCommandService: reviewCommandService
+                    -ReviewsQueryService: reviewsQueryService
+                    --
+                    +ResponseEntity<ReviewResource>: createReview()
+                    +ResponseEntity<ReviewResource>: updateReview()
+                    +ResponseEntity<?>: getReviewsWithParameters()
+                    +ResponseEntity<ReviewResource>: getReviewById()
+                    +ResponseEntity<List<ReviewResource>>: getAllReviews()
+                }
+            }
+            package "Resources" {
+                class ReviewResource <<Record>> {}
+                class CreateReviewCommand <<Record>> {}
+                class UpdateReviewCommand <<Record>> {}
+            }
+            package "Assembler" {
+                class ReviewResourceFromEntityAssembler {
+                    +ReviewResource: toResourceFromEntity()
+                }
+                class CreateReviewCommandFromResourceAssembler {
+                    +CreateReviewCommand: toCommandFromResource()
+                }
+                class UpdateReviewCommandFromResourceAssembler {
+                    +UpdateReviewCommand: toCommandFromResource()
+                }
+            }
+        }
+        package "acl" {
+            class ReviewsContextFacadeImpl {}
+        }
+    }
+}
+' === AGGREGATE CON VALUE OBJECTS ===
+Reviews.Domain.Model.Aggregates.Reviews --> Reviews.Domain.Model.ValueObjects.ProviderId
+Reviews.Domain.Model.Aggregates.Reviews --> Reviews.Domain.Model.ValueObjects.ClientId
+Reviews.Domain.Model.Aggregates.Reviews --> Reviews.Domain.Model.ValueObjects.Review
+
+' === COMMANDS CON AGGREGATE ===
+Reviews.Domain.Model.Commands.CreateReviewCommand --> Reviews.Domain.Model.Aggregates.Reviews
+Reviews.Domain.Model.Commands.UpdateReviewCommand --> Reviews.Domain.Model.Aggregates.Reviews
+
+' === QUERIES CON AGGREGATE ===
+Reviews.Domain.Model.Queries.GetAllReviewsQuery --> Reviews.Domain.Model.Aggregates.Reviews
+Reviews.Domain.Model.Queries.GetReviewByIdQuery --> Reviews.Domain.Model.Aggregates.Reviews
+Reviews.Domain.Model.Queries.GetReviewsByProviderIdQuery --> Reviews.Domain.Model.Aggregates.Reviews
+Reviews.Domain.Model.Queries.GetReviewsByClientIdQuery --> Reviews.Domain.Model.Aggregates.Reviews
+
+' === SERVICES CON COMANDOS Y CONSULTAS ===
+Reviews.Domain.Services.ReviewCommandService --> Reviews.Domain.Model.Commands.CreateReviewCommand
+Reviews.Domain.Services.ReviewCommandService --> Reviews.Domain.Model.Commands.UpdateReviewCommand
+Reviews.Domain.Services.ReviewsQueryService --> Reviews.Domain.Model.Queries.GetAllReviewsQuery
+Reviews.Domain.Services.ReviewsQueryService --> Reviews.Domain.Model.Queries.GetReviewByIdQuery
+Reviews.Domain.Services.ReviewsQueryService --> Reviews.Domain.Model.Queries.GetReviewsByProviderIdQuery
+Reviews.Domain.Services.ReviewsQueryService --> Reviews.Domain.Model.Queries.GetReviewsByClientIdQuery
+
+' === SERVICE IMPL CON REPOSITORY Y COMANDOS ===
+Reviews.Application.Internal.CommandServices.ReviewCommandServiceImpl --> Reviews.Infrastructure.Persistence.jpa.ReviewRepository
+Reviews.Application.Internal.CommandServices.ReviewCommandServiceImpl --> Reviews.Domain.Model.Commands.CreateReviewCommand
+Reviews.Application.Internal.CommandServices.ReviewCommandServiceImpl --> Reviews.Domain.Model.Commands.UpdateReviewCommand
+
+Reviews.Application.Internal.QueryServices.ReviewsQueryServiceImpl --> Reviews.Infrastructure.Persistence.jpa.ReviewRepository
+Reviews.Application.Internal.QueryServices.ReviewsQueryServiceImpl --> Reviews.Domain.Model.Queries.GetAllReviewsQuery
+Reviews.Application.Internal.QueryServices.ReviewsQueryServiceImpl --> Reviews.Domain.Model.Queries.GetReviewByIdQuery
+Reviews.Application.Internal.QueryServices.ReviewsQueryServiceImpl --> Reviews.Domain.Model.Queries.GetReviewsByProviderIdQuery
+Reviews.Application.Internal.QueryServices.ReviewsQueryServiceImpl --> Reviews.Domain.Model.Queries.GetReviewsByClientIdQuery
+
+' === CONTROLLER CON SERVICIOS Y OBJETOS ===
+Reviews.Interfaces.Rest.Controllers.ReviewController --> Reviews.Domain.Services.ReviewCommandService
+Reviews.Interfaces.Rest.Controllers.ReviewController --> Reviews.Domain.Services.ReviewsQueryService
+Reviews.Interfaces.Rest.Controllers.ReviewController --> Reviews.Domain.Model.Aggregates.Reviews
+Reviews.Interfaces.Rest.Controllers.ReviewController --> Reviews.Domain.Model.Commands.CreateReviewCommand
+Reviews.Interfaces.Rest.Controllers.ReviewController --> Reviews.Domain.Model.Commands.UpdateReviewCommand
+Reviews.Interfaces.Rest.Controllers.ReviewController --> Reviews.Domain.Model.Queries.GetAllReviewsQuery
+Reviews.Interfaces.Rest.Controllers.ReviewController --> Reviews.Domain.Model.Queries.GetReviewByIdQuery
+
+' === ASSEMBLERS ===
+Reviews.Interfaces.Rest.Assembler.ReviewResourceFromEntityAssembler --> Reviews.Interfaces.Rest.Resources.ReviewResource
+Reviews.Interfaces.Rest.Assembler.ReviewResourceFromEntityAssembler --> Reviews.Domain.Model.Aggregates.Reviews
+
+Reviews.Interfaces.Rest.Assembler.CreateReviewCommandFromResourceAssembler --> Reviews.Interfaces.Rest.Resources.CreateReviewCommand
+Reviews.Interfaces.Rest.Assembler.CreateReviewCommandFromResourceAssembler --> Reviews.Domain.Model.Commands.CreateReviewCommand
+
+Reviews.Interfaces.Rest.Assembler.UpdateReviewCommandFromResourceAssembler --> Reviews.Interfaces.Rest.Resources.UpdateReviewCommand
+Reviews.Interfaces.Rest.Assembler.UpdateReviewCommandFromResourceAssembler --> Reviews.Domain.Model.Commands.UpdateReviewCommand
+
+
+
+@enduml

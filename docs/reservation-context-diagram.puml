@@ -1,0 +1,158 @@
+@startuml
+package "Reservations" {
+    package "Domain" {
+        package "Model" {
+            package "Aggregates" {
+                class Reservations {
+                    -client_id: ClientId
+                    -service_id: ServiceId
+                    -provider_id: ProviderId
+                    -payment_id: PaymentId
+                    -time_slot_id: TimeSlotId
+                    -worker_id: WorkerId
+                }
+            }
+            package "ValueObjects" {
+                class ClientId <<ValueObject>> {
+                    -id: long
+                }
+                class ServiceId <<ValueObject>> {
+                    -id: long
+                }
+                class PaymentId <<ValueObject>> {
+                    -id: long
+                }
+                class TimeSlotId <<ValueObject>> {
+                    -id: long
+                }
+                class WorkerId <<ValueObject>> {
+                    -id: String
+                }
+            }
+            package "Commands" {
+                class CreateReservationCommand <<Record>> {}
+                class UpdateReservationCommand <<Record>> {}
+            }
+            package "Queries" {
+                class GetAllReservationsQuery <<Record>> {}
+                class GetReservationByIdQuery <<Record>> {}
+                class GetReservationsByClientIdQuery <<Record>> {}
+                class GetReservationsByProviderIdQuery <<Record>> {}
+            }
+        }
+        package "Services" {
+            class ReservationCommandService <<Interface>> {
+                +Optional<Reservations> handle(CreateReservationCommand command)
+                +Optional<Reservations> handle(UpdateReservationCommand command)
+            }
+            class ReservationsQueryService <<Interface>> {
+                +List<Reservations> handle(GetAllReservationsQuery query)
+                +Optional<Reservations> handle(GetReservationByIdQuery query)
+                +List<Reservations> handle(GetReservationsByClientIdQuery query)
+                +List<Reservations> handle(GetReservationsByProviderIdQuery query)
+                +List<Reservations> handle(GetReservationsByWorkerIdQuery query)
+            }
+        }
+    }
+    package "Application" {
+        package "Internal" {
+            package CommandServices {
+                class ReservationCommandServiceImpl {
+                    -ReservationRepository: reservationRepository
+                    --
+                    +Optional<Reservations> handle(CreateReservationCommand command)
+                    +Optional<Reservations> handle(UpdateReservationCommand command)
+                }
+            }
+            package QueryServices {
+                class ReservationsQueryServiceImpl {
+                    -ReservationRepository: reservationRepository
+                    --
+                    +List<Reservations> handle(GetAllReservationsQuery query)
+                    +Optional<Reservations> handle(GetReservationByIdQuery query)
+                    +List<Reservations> handle(GetReservationsByClientIdQuery query)
+                    +List<Reservations> handle(GetReservationsByProviderIdQuery query)
+                    +List<Reservations> handle(GetReservationsByWorkerIdQuery query)
+                }
+            }
+        }
+    }
+    package "Infrastructure" {
+        package "Persistence" {
+            package "jpa" {
+                class ReservationRepository <<Interface>> {}
+            }
+        }
+    }
+    package "Interfaces" {
+        package "Rest" {
+            package "Controllers" {
+                class ReservationController {
+                    -ReservationCommandService: reservationCommandService
+                    -ReservationsQueryService: reservationsQueryService
+                    --
+                    +ResponseEntity<ReservationResource>: createReservation()
+                    +ResponseEntity<ReservationResource>: updateReservation()
+                    +ResponseEntity<?>: getReservationsWithParameters()
+                    +ResponseEntity<ReservationResource>: getReservationById()
+                    +ResponseEntity<List<ReservationResource>>: getAllReservations()
+                }
+            }
+            package "Resources" {
+                class ReservationResource <<Record>> {}
+                class CreateReservationCommand <<Record>> {}
+                class UpdateReservationCommand <<Record>> {}
+            }
+            package "Assembler" {
+                class ReservationResourceFromEntityAssembler {
+                    +ReservationResource: toResourceFromEntity()
+                }
+                class CreateReservationCommandFromResourceAssembler {
+                    +CreateReservationCommand: toCommandFromResource()
+                }
+                class UpdateReservationCommandFromResourceAssembler {
+                    +UpdateReservationCommand: toCommandFromResource()
+                }
+            }
+        }
+    }
+}
+' === AGGREGATE CON VALUE OBJECTS ===
+Reservations.Domain.Model.Aggregates.Reservations --> Reservations.Domain.Model.ValueObjects.ClientId
+Reservations.Domain.Model.Aggregates.Reservations --> Reservations.Domain.Model.ValueObjects.ServiceId
+Reservations.Domain.Model.Aggregates.Reservations --> Reservations.Domain.Model.ValueObjects.ProviderId
+Reservations.Domain.Model.Aggregates.Reservations --> Reservations.Domain.Model.ValueObjects.PaymentId
+Reservations.Domain.Model.Aggregates.Reservations --> Reservations.Domain.Model.ValueObjects.TimeSlotId
+Reservations.Domain.Model.Aggregates.Reservations --> Reservations.Domain.Model.ValueObjects.WorkerId
+
+' === SERVICES CONECTADOS CON COMMANDS Y QUERIES ===
+Reservations.Domain.Services.ReservationCommandService --> Reservations.Domain.Model.Commands.CreateReservationCommand
+Reservations.Domain.Services.ReservationCommandService --> Reservations.Domain.Model.Commands.UpdateReservationCommand
+Reservations.Domain.Services.ReservationsQueryService --> Reservations.Domain.Model.Queries.GetAllReservationsQuery
+Reservations.Domain.Services.ReservationsQueryService --> Reservations.Domain.Model.Queries.GetReservationByIdQuery
+Reservations.Domain.Services.ReservationsQueryService --> Reservations.Domain.Model.Queries.GetReservationsByClientIdQuery
+Reservations.Domain.Services.ReservationsQueryService --> Reservations.Domain.Model.Queries.GetReservationsByProviderIdQuery
+Reservations.Domain.Services.ReservationsQueryService --> Reservations.Domain.Model.Queries.GetReservationsByWorkerIdQuery
+
+' === IMPL CON REPO Y SERVICIOS ===
+Reservations.Application.Internal.CommandServices.ReservationCommandServiceImpl --> Reservations.Infrastructure.Persistence.jpa.ReservationRepository
+Reservations.Application.Internal.CommandServices.ReservationCommandServiceImpl --> Reservations.Domain.Model.Commands.CreateReservationCommand
+Reservations.Application.Internal.CommandServices.ReservationCommandServiceImpl --> Reservations.Domain.Model.Commands.UpdateReservationCommand
+Reservations.Application.Internal.QueryServices.ReservationsQueryServiceImpl --> Reservations.Infrastructure.Persistence.jpa.ReservationRepository
+Reservations.Application.Internal.QueryServices.ReservationsQueryServiceImpl --> Reservations.Domain.Model.Queries.GetAllReservationsQuery
+Reservations.Application.Internal.QueryServices.ReservationsQueryServiceImpl --> Reservations.Domain.Model.Queries.GetReservationByIdQuery
+Reservations.Application.Internal.QueryServices.ReservationsQueryServiceImpl --> Reservations.Domain.Model.Queries.GetReservationsByClientIdQuery
+Reservations.Application.Internal.QueryServices.ReservationsQueryServiceImpl --> Reservations.Domain.Model.Queries.GetReservationsByProviderIdQuery
+Reservations.Application.Internal.QueryServices.ReservationsQueryServiceImpl --> Reservations.Domain.Model.Queries.GetReservationsByWorkerIdQuery
+
+' === CONTROLLER CON SERVICES ===
+Reservations.Interfaces.Rest.Controllers.ReservationController --> Reservations.Domain.Services.ReservationCommandService
+Reservations.Interfaces.Rest.Controllers.ReservationController --> Reservations.Domain.Services.ReservationsQueryService
+
+' === ASSEMBLERS ===
+Reservations.Interfaces.Rest.Assembler.ReservationResourceFromEntityAssembler --> Reservations.Domain.Model.Aggregates.Reservations
+Reservations.Interfaces.Rest.Assembler.ReservationResourceFromEntityAssembler --> Reservations.Interfaces.Rest.Resources.ReservationResource
+Reservations.Interfaces.Rest.Assembler.CreateReservationCommandFromResourceAssembler --> Reservations.Interfaces.Rest.Resources.CreateReservationCommand
+Reservations.Interfaces.Rest.Assembler.UpdateReservationCommandFromResourceAssembler --> Reservations.Interfaces.Rest.Resources.UpdateReservationCommand
+
+@enduml

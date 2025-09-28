@@ -1,0 +1,154 @@
+@startuml
+
+
+
+package "Workers" {
+    package "Domain" {
+        package "Model" {
+            package "Aggregates" {
+                class Workers {
+                    -name: WorkerName
+                    -specialization: WorkerSpecialization
+                    -photo_url: WorkerPhotoUrl
+                }
+            }
+            package "ValueObjects" {
+                class WorkerName <<ValueObject>> {
+                    -name: String
+                }
+                class WorkerSpecialization <<ValueObject>> {
+                    -specialization: String
+                }
+                class WorkerPhotoUrl <<ValueObject>> {
+                    -photo_url: String
+                }
+            }
+            package "Commands" {
+                class CreateWorkerCommand <<Record>> {}
+                class UpdateWorkerCommand <<Record>> {}
+            }
+            package "Queries" {
+                class GetAllWorkersQuery <<Record>> {}
+                class GetWorkerByIdQuery <<Record>> {}
+                class GetWorkersByProviderIdQuery <<Record>> {}
+            }
+        }
+        package "Services" {
+            class WorkerCommandService <<Interface>> {
+                +Optional<Workers> handle(CreateWorkerCommand command)
+                +Optional<Workers> handle(UpdateWorkerCommand command)
+            }
+            class WorkersQueryService <<Interface>> {
+                +List<Workers> handle(GetAllWorkersQuery query)
+                +Optional<Workers> handle(GetWorkerByIdQuery query)
+                +List<Workers> handle(GetWorkersByProviderIdQuery query)
+            }
+        }
+    }
+    package "Application" {
+        package "Internal" {
+            package CommandServices {
+                class WorkerCommandServiceImpl {
+                    -WorkerRepository: workerRepository
+                    --
+                    +Optional<Workers> handle(CreateWorkerCommand command)
+                    +Optional<Workers> handle(UpdateWorkerCommand command)
+                }
+            }
+            package QueryServices {
+                class WorkersQueryServiceImpl {
+                    -WorkerRepository: workerRepository
+                    --
+                    +List<Workers> handle(GetAllWorkersQuery query)
+                    +Optional<Workers> handle(GetWorkerByIdQuery query)
+                    +List<Workers> handle(GetWorkersByProviderIdQuery query)
+                }
+            }
+        }
+    }
+    package "Infrastructure" {
+        package "Persistence" {
+            package "jpa" {
+                class WorkerRepository <<Interface>> {}
+            }
+        }
+    }
+    package "Interfaces" {
+        package "Rest" {
+            package "Controllers" {
+                class WorkerController {
+                    -WorkerCommandService: workerCommandService
+                    -WorkersQueryService: workersQueryService
+                    --
+                    +ResponseEntity<WorkerResource>: createWorker()
+                    +ResponseEntity<WorkerResource>: updateWorker()
+                    +ResponseEntity<?>: getWorkersWithParameters()
+                    +ResponseEntity<WorkerResource>: getWorkerById()
+                    +ResponseEntity<List<WorkerResource>>: getAllWorkers()
+                }
+            }
+            package "Resources" {
+                class WorkerResource <<Record>> {}
+                class CreateWorkerCommand <<Record>> {}
+                class UpdateWorkerCommand <<Record>> {}
+            }
+            package "Assembler" {
+                class WorkerResourceFromEntityAssembler {
+                    +WorkerResource: toResourceFromEntity()
+                }
+                class CreateWorkerCommandFromResourceAssembler {
+                    +CreateWorkerCommand: toCommandFromResource()
+                }
+                class UpdateWorkerCommandFromResourceAssembler {
+                    +UpdateWorkerCommand: toCommandFromResource()
+                }
+            }
+        }
+    }
+}
+   ' === RELACIONES ===
+    Workers.Domain.Model.Aggregates.Workers --> Workers.Domain.Model.ValueObjects.WorkerName
+    Workers.Domain.Model.Aggregates.Workers --> Workers.Domain.Model.ValueObjects.WorkerSpecialization
+    Workers.Domain.Model.Aggregates.Workers --> Workers.Domain.Model.ValueObjects.WorkerPhotoUrl
+
+    Workers.Domain.Model.Commands.CreateWorkerCommand --> Workers.Domain.Model.Aggregates.Workers
+    Workers.Domain.Model.Commands.UpdateWorkerCommand --> Workers.Domain.Model.Aggregates.Workers
+
+    Workers.Domain.Model.Queries.GetAllWorkersQuery --> Workers.Domain.Model.Aggregates.Workers
+    Workers.Domain.Model.Queries.GetWorkerByIdQuery --> Workers.Domain.Model.Aggregates.Workers
+    Workers.Domain.Model.Queries.GetWorkersByProviderIdQuery --> Workers.Domain.Model.Aggregates.Workers
+
+    Workers.Domain.Services.WorkerCommandService --> Workers.Domain.Model.Commands.CreateWorkerCommand
+    Workers.Domain.Services.WorkerCommandService --> Workers.Domain.Model.Commands.UpdateWorkerCommand
+    Workers.Domain.Services.WorkersQueryService --> Workers.Domain.Model.Queries.GetAllWorkersQuery
+    Workers.Domain.Services.WorkersQueryService --> Workers.Domain.Model.Queries.GetWorkerByIdQuery
+    Workers.Domain.Services.WorkersQueryService --> Workers.Domain.Model.Queries.GetWorkersByProviderIdQuery
+
+    Workers.Application.Internal.CommandServices.WorkerCommandServiceImpl --> Workers.Infrastructure.Persistence.jpa.WorkerRepository
+    Workers.Application.Internal.CommandServices.WorkerCommandServiceImpl --> Workers.Domain.Model.Commands.CreateWorkerCommand
+    Workers.Application.Internal.CommandServices.WorkerCommandServiceImpl --> Workers.Domain.Model.Commands.UpdateWorkerCommand
+
+    Workers.Application.Internal.QueryServices.WorkersQueryServiceImpl --> Workers.Infrastructure.Persistence.jpa.WorkerRepository
+    Workers.Application.Internal.QueryServices.WorkersQueryServiceImpl --> Workers.Domain.Model.Queries.GetAllWorkersQuery
+    Workers.Application.Internal.QueryServices.WorkersQueryServiceImpl --> Workers.Domain.Model.Queries.GetWorkerByIdQuery
+    Workers.Application.Internal.QueryServices.WorkersQueryServiceImpl --> Workers.Domain.Model.Queries.GetWorkersByProviderIdQuery
+
+    Workers.Interfaces.Rest.Controllers.WorkerController --> Workers.Domain.Services.WorkerCommandService
+    Workers.Interfaces.Rest.Controllers.WorkerController --> Workers.Domain.Services.WorkersQueryService
+    Workers.Interfaces.Rest.Controllers.WorkerController --> Workers.Domain.Model.Aggregates.Workers
+    Workers.Interfaces.Rest.Controllers.WorkerController --> Workers.Domain.Model.Commands.CreateWorkerCommand
+    Workers.Interfaces.Rest.Controllers.WorkerController --> Workers.Domain.Model.Commands.UpdateWorkerCommand
+    Workers.Interfaces.Rest.Controllers.WorkerController --> Workers.Domain.Model.Queries.GetAllWorkersQuery
+    Workers.Interfaces.Rest.Controllers.WorkerController --> Workers.Domain.Model.Queries.GetWorkerByIdQuery
+    Workers.Interfaces.Rest.Controllers.WorkerController --> Workers.Domain.Model.Queries.GetWorkersByProviderIdQuery
+
+    Workers.Interfaces.Rest.Assembler.WorkerResourceFromEntityAssembler --> Workers.Interfaces.Rest.Resources.WorkerResource
+    Workers.Interfaces.Rest.Assembler.WorkerResourceFromEntityAssembler --> Workers.Domain.Model.Aggregates.Workers
+    Workers.Interfaces.Rest.Assembler.CreateWorkerCommandFromResourceAssembler --> Workers.Domain.Model.Commands.CreateWorkerCommand
+    Workers.Interfaces.Rest.Assembler.UpdateWorkerCommandFromResourceAssembler --> Workers.Domain.Model.Commands.UpdateWorkerCommand
+
+    Workers.Interfaces.Rest.Resources.CreateWorkerCommand --> Workers.Domain.Model.Commands.CreateWorkerCommand
+    Workers.Interfaces.Rest.Resources.UpdateWorkerCommand --> Workers.Domain.Model.Commands.UpdateWorkerCommand
+
+
+@enduml
