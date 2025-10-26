@@ -21,7 +21,7 @@ public class Reservation extends AuditableAbstractAggregateRoot<Reservation> {
     @Column(nullable = false)
     private Long paymentId;
 
-    @Column(nullable = false, length = 32)
+    @Column(nullable = false)
     private Long timeSlotId;
 
     @Column(nullable = false)

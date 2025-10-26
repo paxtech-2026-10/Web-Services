@@ -5,10 +5,8 @@ import com.paxtech.utime.platform.profiles.domain.model.valueobjects.CompanyName
 import com.paxtech.utime.platform.shared.domain.model.aggregates.AuditableAbstractAggregateRoot;
 import jakarta.persistence.*;
 import lombok.Getter;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Getter
 @Entity
-@EntityListeners(AuditingEntityListener.class)
 public class Provider extends AuditableAbstractAggregateRoot<Provider> {
 
     @Embedded
@@ -35,4 +33,10 @@ public class Provider extends AuditableAbstractAggregateRoot<Provider> {
         return companyName.getValue();
     }
 
+    public void updateCompanyName(String newCompanyName) {
+        if (newCompanyName == null || newCompanyName.isBlank()) {
+            throw new IllegalArgumentException("Company name cannot be null or empty");
+        }
+        this.companyName = new CompanyName(newCompanyName);
+    }
 }

@@ -98,7 +98,7 @@ public class ProviderProfileController {
                 profile.getId(),
                 provider.getId(),
                 provider.getCompanyName(),
-                "String Location",
+                profile.getLocation() != null ? profile.getLocation() : "",
                 provider.getUser().getEmail(),
                 profile.getProfileImageUrl(),
                 profile.getCoverImageUrl(),
@@ -121,6 +121,7 @@ public class ProviderProfileController {
         var providerProfileResource = new CreateProviderProfileResource(
                 resource.profileImageUrl(),
                 resource.coverImageUrl(),
+                resource.location(),
                 resource.providerId()
         );
         var createProviderProfileCommand =
@@ -245,7 +246,7 @@ public class ProviderProfileController {
                     provider != null ? provider.getId() : null,
                     profile.getProviderId(),
                     provider != null ? provider.getCompanyName() : null,
-                    "String Location",
+                    profile.getLocation() != null ? profile.getLocation() : "",
                     provider != null ? provider.getUser().getEmail() : null,
                     profile.getProfileImageUrl(),
                     profile.getCoverImageUrl(),
@@ -272,7 +273,8 @@ public class ProviderProfileController {
             var command = new UpdateProviderProfileCommand(
                     id,
                     resource.profileImageUrl(),
-                    resource.coverImageUrl()
+                    resource.coverImageUrl(),
+                    resource.location()
             );
 
             var updated = providerProfileCommandService.handle(command);

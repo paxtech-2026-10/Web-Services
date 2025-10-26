@@ -5,6 +5,6 @@ import com.paxtech.utime.platform.profiles.interfaces.rest.resources.CreateProvi
 
 public class CreateSalonProfileCommandFromResourceAssembler {
     public static CreateProviderProfileCommand toCommandFromResource(CreateProviderProfileResource resource) {
-        return new CreateProviderProfileCommand(resource.profileUrl(), resource.coverUrl(), resource.providerId());
+        return new CreateProviderProfileCommand(resource.profileUrl(), resource.coverUrl(), resource.location(), resource.providerId());
     }
 }

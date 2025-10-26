@@ -19,6 +19,9 @@ public class ProviderProfile extends AuditableAbstractAggregateRoot<ProviderProf
     @Column(name = "cover_image_url", length = 150)
     private String coverImageUrl;
 
+    @Column(name = "location", length = 200)
+    private String location;
+
     // Relaciones hacia otras entidades
 
     @OneToMany(mappedBy = "providerProfile", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -33,9 +36,10 @@ public class ProviderProfile extends AuditableAbstractAggregateRoot<ProviderProf
     @Column(name = "provider_id", nullable = false, unique = true)
     private Long providerId;
 
-    public ProviderProfile updateInformation(String profileUrl, String coverUrl) {
+    public ProviderProfile updateInformation(String profileUrl, String coverUrl, String location) {
         this.profileImageUrl = profileUrl;
         this.coverImageUrl = coverUrl;
+        this.location = location;
         return this;
     }
 
@@ -44,6 +48,7 @@ public class ProviderProfile extends AuditableAbstractAggregateRoot<ProviderProf
     public ProviderProfile(CreateProviderProfileCommand command) {
         this.profileImageUrl = command.profileUrl();
         this.coverImageUrl = command.coverUrl();
+        this.location = command.location();
         this.providerId = command.providerId();
     }
 

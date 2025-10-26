@@ -1,5 +1,8 @@
 package com.paxtech.utime.platform.workers.domain.model.valueobjects;
 
+import jakarta.persistence.Embeddable;
+
+@Embeddable
 public record WorkerPhotoUrl(String url) {
     public WorkerPhotoUrl {
         if (url == null || url.isBlank()) {

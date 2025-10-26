@@ -10,8 +10,14 @@ import com.paxtech.utime.platform.profiles.domain.services.ClientCommandService;
 import com.paxtech.utime.platform.profiles.domain.services.ClientQueryService;
 import com.paxtech.utime.platform.profiles.interfaces.rest.resources.ClientResource;
 import com.paxtech.utime.platform.profiles.interfaces.rest.resources.CreateClientResource;
+import com.paxtech.utime.platform.profiles.interfaces.rest.resources.UpdateClientResource;
+import com.paxtech.utime.platform.profiles.domain.model.commands.UpdateClientCommand;
+import com.paxtech.utime.platform.profiles.domain.model.commands.DeleteClientCommand;
 import com.paxtech.utime.platform.profiles.interfaces.rest.transform.ClientResourceFrontEntityAssembler;
 import com.paxtech.utime.platform.profiles.interfaces.rest.transform.CreateClientCommandFromResourceAssembler;
+import com.paxtech.utime.platform.profiles.interfaces.rest.transform.UpdateClientCommandFromResourceAssembler;
+import org.springframework.http.HttpStatus;
+import com.paxtech.utime.platform.shared.interfaces.rest.resources.MessageResource;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -153,6 +159,63 @@ public class ClientsController {
         return result
                 .map(client -> ResponseEntity.ok(ClientResourceFrontEntityAssembler.toResourceFromEntity(client)))
                 .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    /**
+     * Update a client by ID
+     * @param id The client ID
+     * @param resource The {@link UpdateClientResource} with updated data
+     * @return A {@link ClientResource} if updated, or 404 Not Found
+     */
+    @Operation(
+            summary = "Update a client",
+            description = "Update client information"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Client updated successfully"),
+            @ApiResponse(responseCode = "404", description = "Client not found"),
+            @ApiResponse(responseCode = "400", description = "Invalid request")
+    })
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateClient(@PathVariable Long id, @RequestBody UpdateClientResource resource) {
+        try {
+            var command = UpdateClientCommandFromResourceAssembler.toCommandFromResource(id, resource);
+            var updated = clientCommandService.handle(command);
+            
+            if (updated.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(new MessageResource("Client not found"));
+            }
+            
+            return ResponseEntity.ok(ClientResourceFrontEntityAssembler.toResourceFromEntity(updated.get()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new MessageResource(e.getMessage()));
+        }
+    }
+
+    /**
+     * Delete a client by ID
+     * @param id The client ID
+     * @return 204 No Content if successful, 404 Not Found if client doesn't exist
+     */
+    @Operation(
+            summary = "Delete a client",
+            description = "Delete client by ID"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Client deleted successfully"),
+            @ApiResponse(responseCode = "404", description = "Client not found")
+    })
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteClient(@PathVariable Long id) {
+        try {
+            clientCommandService.handle(new DeleteClientCommand(id));
+            return ResponseEntity.noContent().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new MessageResource(e.getMessage()));
+        }
     }
 
 }

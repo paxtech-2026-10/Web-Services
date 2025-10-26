@@ -48,7 +48,7 @@ public class ProviderProfileCommandServiceImpl implements ProviderProfileCommand
         }
         var serviceToUpdate = result.get();
         try {
-            var updatedService = providerProfileRepository.save(serviceToUpdate.updateInformation(command.profileUrl(), command.coverUrl()));
+            var updatedService = providerProfileRepository.save(serviceToUpdate.updateInformation(command.profileUrl(), command.coverUrl(), command.location()));
             return Optional.of(updatedService);
         } catch (Exception e){
             throw new IllegalArgumentException("Error while updating service", e);

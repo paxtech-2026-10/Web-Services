@@ -12,8 +12,14 @@ import com.paxtech.utime.platform.profiles.domain.services.ProviderProfileComman
 import com.paxtech.utime.platform.profiles.domain.services.ProviderQueryService;
 import com.paxtech.utime.platform.profiles.interfaces.rest.resources.CreateProviderResource;
 import com.paxtech.utime.platform.profiles.interfaces.rest.resources.ProviderResource;
+import com.paxtech.utime.platform.profiles.interfaces.rest.resources.UpdateProviderResource;
+import com.paxtech.utime.platform.profiles.domain.model.commands.UpdateProviderCommand;
+import com.paxtech.utime.platform.profiles.domain.model.commands.DeleteProviderCommand;
 import com.paxtech.utime.platform.profiles.interfaces.rest.transform.CreateProviderCommandFromResourceAssembler;
+import com.paxtech.utime.platform.profiles.interfaces.rest.transform.UpdateProviderCommandFromResourceAssembler;
 import com.paxtech.utime.platform.profiles.interfaces.rest.transform.ProviderResourceFromEntityAssembler;
+import org.springframework.http.HttpStatus;
+import com.paxtech.utime.platform.shared.interfaces.rest.resources.MessageResource;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -80,7 +86,7 @@ public class ProvidersController {
         Optional<Provider> provider = providerCommandService.handle(command, userOptional.get());
 
         //Create ProviderProfile
-        var createdProfileCommand = new CreateProviderProfileCommand("to Choose", "to Choose",provider.get().getId());
+        var createdProfileCommand = new CreateProviderProfileCommand("to Choose", "to Choose", "", provider.get().getId());
         providerProfileCommandService.handle(createdProfileCommand);
         // Return 201 Created if successful, otherwise 400 Bad Request
         return provider
@@ -157,5 +163,62 @@ public class ProvidersController {
         return providerOptional
                 .map(provider -> ResponseEntity.ok(ProviderResourceFromEntityAssembler.toResourceFromEntity(provider)))
                 .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    /**
+     * Update a provider by ID
+     * @param id The provider ID
+     * @param resource The {@link UpdateProviderResource} with updated data
+     * @return A {@link ProviderResource} if updated, or 404 Not Found
+     */
+    @Operation(
+            summary = "Update a provider",
+            description = "Update provider information"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Provider updated successfully"),
+            @ApiResponse(responseCode = "404", description = "Provider not found"),
+            @ApiResponse(responseCode = "400", description = "Invalid request")
+    })
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateProvider(@PathVariable Long id, @RequestBody UpdateProviderResource resource) {
+        try {
+            var command = UpdateProviderCommandFromResourceAssembler.toCommandFromResource(id, resource);
+            var updated = providerCommandService.handle(command);
+            
+            if (updated.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(new MessageResource("Provider not found"));
+            }
+            
+            return ResponseEntity.ok(ProviderResourceFromEntityAssembler.toResourceFromEntity(updated.get()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new MessageResource(e.getMessage()));
+        }
+    }
+
+    /**
+     * Delete a provider by ID
+     * @param id The provider ID
+     * @return 204 No Content if successful, 404 Not Found if provider doesn't exist
+     */
+    @Operation(
+            summary = "Delete a provider",
+            description = "Delete provider by ID"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Provider deleted successfully"),
+            @ApiResponse(responseCode = "404", description = "Provider not found")
+    })
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteProvider(@PathVariable Long id) {
+        try {
+            providerCommandService.handle(new DeleteProviderCommand(id));
+            return ResponseEntity.noContent().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new MessageResource(e.getMessage()));
+        }
     }
 }

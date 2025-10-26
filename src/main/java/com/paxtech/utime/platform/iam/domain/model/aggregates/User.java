@@ -20,10 +20,6 @@ import lombok.Setter;
 @Entity
 public class User extends AuditableAbstractAggregateRoot<User> {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
     @NotBlank
     @Size(max = 50)
     @Column(unique = true)

@@ -5,11 +5,9 @@ import com.paxtech.utime.platform.profiles.domain.model.commands.CreateClientCom
 import com.paxtech.utime.platform.profiles.domain.model.valueobjects.*;
 import com.paxtech.utime.platform.shared.domain.model.aggregates.AuditableAbstractAggregateRoot;
 import jakarta.persistence.*;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 
 @Entity
-@EntityListeners(AuditingEntityListener.class)
 public class Client extends AuditableAbstractAggregateRoot<Client> {
 
     @Embedded
@@ -41,4 +39,13 @@ public class Client extends AuditableAbstractAggregateRoot<Client> {
         return fullName.getFullName();
     }
 
+    public void updateFullName(String firstName, String lastName) {
+        if (firstName == null || firstName.isBlank()) {
+            throw new IllegalArgumentException("First name cannot be null or empty");
+        }
+        if (lastName == null || lastName.isBlank()) {
+            throw new IllegalArgumentException("Last name cannot be null or empty");
+        }
+        this.fullName = new FullName(firstName, lastName);
+    }
 }

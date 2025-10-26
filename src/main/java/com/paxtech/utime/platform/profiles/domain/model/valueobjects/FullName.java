@@ -1,5 +1,8 @@
 package com.paxtech.utime.platform.profiles.domain.model.valueobjects;
 
+import jakarta.persistence.Embeddable;
+
+@Embeddable
 public record FullName(String firstName, String lastName) {
 
     public FullName() {
