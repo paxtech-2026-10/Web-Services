@@ -8,7 +8,7 @@ public class CreateReservationCommandFromResourceAssembler {
         return new CreateReservationCommand(
                 resource.clientId(),
                 resource.providerId(),
-                resource.paymentId(),
+                resource.serviceId(),
                 resource.timeSlotId(),
                 resource.workerId()
         );

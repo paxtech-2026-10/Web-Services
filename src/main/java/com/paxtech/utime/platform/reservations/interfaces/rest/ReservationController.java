@@ -4,7 +4,7 @@ import com.paxtech.utime.platform.profiles.interfaces.acl.ProviderContextFacade;
 import com.paxtech.utime.platform.reservations.domain.model.commands.CreateReservationCommand;
 import com.paxtech.utime.platform.reservations.domain.model.queries.GetAllReservationsQuery;
 import com.paxtech.utime.platform.reservations.domain.model.queries.GetReservationByIdQuery;
-import com.paxtech.utime.platform.reservations.domain.services.PaymentQueryService;
+
 import com.paxtech.utime.platform.reservations.domain.services.ReservationCommandService;
 import com.paxtech.utime.platform.reservations.domain.services.ReservationQueryService;
 import com.paxtech.utime.platform.reservations.domain.services.TimeSlotQueryService;
@@ -14,6 +14,7 @@ import com.paxtech.utime.platform.reservations.interfaces.rest.resources.Reserva
 import com.paxtech.utime.platform.reservations.interfaces.rest.transform.CreateReservationCommandFromResourceAssembler;
 import com.paxtech.utime.platform.reservations.interfaces.rest.transform.ReservationDetailsResourceFromEntityAssembler;
 import com.paxtech.utime.platform.reservations.interfaces.rest.transform.ReservationResourceFromEntityAssembler;
+import com.paxtech.utime.platform.services.domain.services.ServiceQueryService;
 import com.paxtech.utime.platform.workers.interfaces.rest.acl.WorkerContextFacade;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -38,7 +39,7 @@ public class ReservationController {
     private final ProviderContextFacade providerContextFacade;
     private final TimeSlotQueryService timeSlotQueryService;
     private final WorkerContextFacade workerContextFacade;
-    private final PaymentQueryService paymentQueryService;
+    private final ServiceQueryService serviceQueryService;
 
     /**
      * Constructor
@@ -46,13 +47,13 @@ public class ReservationController {
      * @param reservationQueryService The {@link ReservationQueryService} instance
      */
     public ReservationController(ReservationCommandService reservationCommandService,
-                                 ReservationQueryService reservationQueryService, ProviderContextFacade providerContextFacade, TimeSlotQueryService timeSlotQueryService, WorkerContextFacade workerContextFacade, PaymentQueryService paymentQueryService) {
+                                 ReservationQueryService reservationQueryService, ProviderContextFacade providerContextFacade, TimeSlotQueryService timeSlotQueryService, WorkerContextFacade workerContextFacade, ServiceQueryService serviceQueryService) {
         this.reservationCommandService = reservationCommandService;
         this.reservationQueryService = reservationQueryService;
         this.providerContextFacade = providerContextFacade;
         this.timeSlotQueryService = timeSlotQueryService;
         this.workerContextFacade = workerContextFacade;
-        this.paymentQueryService = paymentQueryService;
+        this.serviceQueryService = serviceQueryService;
     }
 
     /**
@@ -128,7 +129,7 @@ public class ReservationController {
                 providerContextFacade,
                 timeSlotQueryService,
                 workerContextFacade,
-                paymentQueryService
+                serviceQueryService
         );
 
         return ResponseEntity.ok(detailsResource);
@@ -160,7 +161,7 @@ public class ReservationController {
                         providerContextFacade,
                         timeSlotQueryService,
                         workerContextFacade,
-                        paymentQueryService
+                        serviceQueryService
                 ))
                 .toList();
 

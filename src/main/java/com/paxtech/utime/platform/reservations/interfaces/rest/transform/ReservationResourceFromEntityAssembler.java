@@ -10,7 +10,7 @@ public class ReservationResourceFromEntityAssembler {
                 reservation.getId(),
                 reservation.getClientId(),
                 reservation.getProviderId(),
-                reservation.getPaymentId(),
+                reservation.getServiceId(),
                 reservation.getTimeSlotId(),
                 reservation.getWorkerId()
         );

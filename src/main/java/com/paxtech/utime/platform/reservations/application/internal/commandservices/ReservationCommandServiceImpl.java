@@ -21,7 +21,7 @@ public class ReservationCommandServiceImpl implements ReservationCommandService 
     public Optional<Reservation> handle(CreateReservationCommand command) {
         if (command.clientId() == null || command.clientId() <= 0 ||
                 command.providerId() == null || command.providerId() <= 0 ||
-                command.paymentId() == null || command.paymentId() <= 0 ||
+                command.serviceId() == null || command.serviceId() <= 0 ||
                 command.timeSlotId() == null || command.timeSlotId()<=0 ||
                 command.workerId() == null || command.workerId() <= 0) {
             throw new IllegalArgumentException("Invalid reservation command");

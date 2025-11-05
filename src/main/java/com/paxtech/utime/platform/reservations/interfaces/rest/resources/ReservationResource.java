@@ -4,7 +4,7 @@ public record ReservationResource(
         Long id,
         Long clientId,
         Long providerId,
-        Long paymentId,
+        Long serviceId,
         Long timeSlotId,
         Long workerId
 ) {}
