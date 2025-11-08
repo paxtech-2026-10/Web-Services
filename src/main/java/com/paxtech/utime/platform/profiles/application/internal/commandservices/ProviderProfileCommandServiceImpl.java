@@ -7,6 +7,7 @@ import com.paxtech.utime.platform.profiles.domain.model.commands.UpdateProviderP
 import com.paxtech.utime.platform.profiles.domain.services.ProviderProfileCommandService;
 import com.paxtech.utime.platform.profiles.infrastructure.persistence.jpa.repositories.ProviderProfileRepository;
 
+import com.paxtech.utime.platform.profiles.infrastructure.persistence.jpa.repositories.SocialRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;

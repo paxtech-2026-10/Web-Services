@@ -127,3 +127,5 @@ La aplicación sigue Clean Architecture:
 3. **JPA Best Practices**: Los Value Objects necesitan `@Embeddable` para ser embebidos
 4. **Validaciones**: Los commands ahora tienen validaciones más flexibles (nullable para Update)
 
+
+

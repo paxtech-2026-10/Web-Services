@@ -37,9 +37,15 @@ public class ProviderProfile extends AuditableAbstractAggregateRoot<ProviderProf
     private Long providerId;
 
     public ProviderProfile updateInformation(String profileUrl, String coverUrl, String location) {
-        this.profileImageUrl = profileUrl;
-        this.coverImageUrl = coverUrl;
-        this.location = location;
+        if (profileUrl != null){
+            this.profileImageUrl = profileUrl;
+        }
+        if (coverUrl != null){
+            this.coverImageUrl = coverUrl;
+        }
+        if (location != null){
+            this.location = location;
+        }
         return this;
     }
 

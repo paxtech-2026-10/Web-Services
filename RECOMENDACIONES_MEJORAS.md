@@ -201,3 +201,5 @@ Los problemas principales eran:
 3. **Implementar validaciones de negocio** en reservas
 4. **Agregar tests** para garantizar calidad
 
+
+

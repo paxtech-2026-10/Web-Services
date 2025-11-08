@@ -1,6 +1,9 @@
 package com.paxtech.utime.platform.profiles.domain.model.commands;
 
-public record UpdateProviderProfileCommand(Long id, String profileUrl, String coverUrl, String location) {
+import java.util.List;
+import java.util.Map;
+
+public record UpdateProviderProfileCommand(Long id, String profileUrl, String coverUrl, String location, String companyName, Map<String, String> socials, List<String> portfolioImages) {
     public UpdateProviderProfileCommand {
         if (id == null || id <= 0) {
             throw new IllegalArgumentException("id cannot be null or less than 1");

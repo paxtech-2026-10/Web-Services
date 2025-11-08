@@ -6,5 +6,8 @@ import java.util.Map;
 public record UpdateProviderProfileResource(
     String profileImageUrl,
     String coverImageUrl,
-    String location
+    String location,
+    String companyName,
+    Map<String, String> socials,
+    List<String> portfolioImages
 ) {}

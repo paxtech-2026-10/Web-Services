@@ -1,7 +1,6 @@
 package com.paxtech.utime.platform.profiles.interfaces.rest;
 
 import com.paxtech.utime.platform.profiles.domain.model.aggregates.Social;
-import com.paxtech.utime.platform.profiles.domain.model.aggregates.SocialInProfile;
 import com.paxtech.utime.platform.profiles.domain.model.commands.*;
 import com.paxtech.utime.platform.profiles.domain.model.queries.*;
 import com.paxtech.utime.platform.profiles.domain.services.*;
@@ -10,12 +9,15 @@ import com.paxtech.utime.platform.profiles.interfaces.rest.transform.CreatePortf
 import com.paxtech.utime.platform.profiles.interfaces.rest.transform.CreateProviderProfileCommandFromResourceAssembler;
 import com.paxtech.utime.platform.profiles.interfaces.rest.transform.CreateSocialCommandFromResourceAssembler;
 import com.paxtech.utime.platform.shared.interfaces.rest.resources.MessageResource;
+import com.paxtech.utime.platform.profiles.infrastructure.persistence.jpa.repositories.SocialInProfileRepository;
+import com.paxtech.utime.platform.profiles.infrastructure.persistence.jpa.repositories.PortfolioInProfileRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
@@ -36,6 +38,9 @@ public class ProviderProfileController {
     private final PortfolioImageCommandService portfolioImageCommandService;
     private final SocialInProfileCommandService socialInProfileCommandService;
     private final PortfolioInProfileCommandService portfolioInProfileCommandService;
+    private final ProviderCommandService providerCommandService;
+    private final SocialInProfileRepository socialInProfileRepository;
+    private final PortfolioInProfileRepository portfolioInProfileRepository;
 
 
     public ProviderProfileController(
@@ -46,7 +51,12 @@ public class ProviderProfileController {
             PortfolioInProfileQueryService portfolioInProfileQueryService,
             SocialCommandService socialCommandService,
             ProviderProfileCommandService providerProfileCommandService,
-            PortfolioImageCommandService portfolioCommandService, SocialInProfileCommandService socialInProfileCommandService, PortfolioInProfileCommandService portfolioInProfileCommandService) {
+            PortfolioImageCommandService portfolioCommandService, 
+            SocialInProfileCommandService socialInProfileCommandService, 
+            PortfolioInProfileCommandService portfolioInProfileCommandService, 
+            ProviderCommandService providerCommandService,
+            SocialInProfileRepository socialInProfileRepository,
+            PortfolioInProfileRepository portfolioInProfileRepository) {
         this.providerProfileQueryService = providerProfileQueryService;
         this.providerQueryService = providerQueryService;
         this.socialsInProfileQueryService = socialsInProfileQueryService;
@@ -57,6 +67,9 @@ public class ProviderProfileController {
         this.portfolioImageCommandService = portfolioCommandService;
         this.socialInProfileCommandService = socialInProfileCommandService;
         this.portfolioInProfileCommandService = portfolioInProfileCommandService;
+        this.providerCommandService = providerCommandService;
+        this.socialInProfileRepository = socialInProfileRepository;
+        this.portfolioInProfileRepository = portfolioInProfileRepository;
     }
 
     @GetMapping("/{id}")
@@ -260,21 +273,34 @@ public class ProviderProfileController {
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "Update profile image and cover")
+    @Operation(summary = "Update full profile")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Profile updated successfully"),
-            @ApiResponse(responseCode = "404", description = "Profile not found")
+            @ApiResponse(responseCode = "404", description = "Profile not found"),
+            @ApiResponse(responseCode = "400", description = "Invalid Input")
     })
+    @Transactional
     public ResponseEntity<?> updateProfile(
             @PathVariable Long id,
             @RequestBody UpdateProviderProfileResource resource) {
 
         try {
+            var profileOpt = providerProfileQueryService.handle(new GetProviderProfileByIdQuery(id));
+            if (profileOpt.isEmpty()){
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(new MessageResource("Profile not found"));
+            }
+            var profile = profileOpt.get();
+
+            // 1. Actualizar ProviderProfile básico (solo campos del profile)
             var command = new UpdateProviderProfileCommand(
                     id,
                     resource.profileImageUrl(),
                     resource.coverImageUrl(),
-                    resource.location()
+                    resource.location(),
+                    resource.companyName(),
+                    resource.socials(),
+                    resource.portfolioImages()
             );
 
             var updated = providerProfileCommandService.handle(command);
@@ -284,14 +310,141 @@ public class ProviderProfileController {
                         .body(new MessageResource("Profile not found"));
             }
 
-            return ResponseEntity.ok(new MessageResource("Profile updated successfully"));
+            // 2. Actualizar Provider (companyName) si se proporciona
+            if (resource.companyName() != null && !resource.companyName().isBlank()) {
+                var providerOpt = providerQueryService.handle(
+                        new GetProviderByIdQuery(profile.getProviderId())
+                );
+                if (providerOpt.isPresent()) {
+                    var updateProviderCommand = new UpdateProviderCommand(
+                            providerOpt.get().getId(),
+                            resource.companyName()
+                    );
+                    providerCommandService.handle(updateProviderCommand);
+                }
+            }
+
+            // 3. Actualizar redes sociales si se proporcionan
+            if (resource.socials() != null) {
+                // Obtener socials actuales
+                var currentSocialLinks = socialsInProfileQueryService.handle(
+                        new GetAllSocialsInProfileByProviderProfileIdQuery(id)
+                );
+
+                // IMPORTANTE: Eliminar primero las RELACIONES (SocialInProfile) antes de eliminar los Socials
+                currentSocialLinks.forEach(link -> {
+                    socialInProfileRepository.deleteById(link.getId());
+                });
+
+                // Luego eliminar los Socials (ahora ya no tienen referencias)
+                currentSocialLinks.forEach(link -> {
+                    socialCommandService.handle(new DeleteSocialCommand(link.getSocial().getId()));
+                });
+
+                // Crear nuevas redes sociales
+                resource.socials().forEach((socialIcon, socialUrl) -> {
+                    var socialResource = new CreateSocialResource(socialUrl, socialIcon);
+                    var createSocialCommand = CreateSocialCommandFromResourceAssembler.toCommandFromResource(socialResource);
+                    var social = socialCommandService.handle(createSocialCommand);
+                    if (social.isPresent()) {
+                        socialInProfileCommandService.handle(new CreateSocialInProfileCommand(
+                                id, social.get().getId()
+                        ));
+                    }
+                });
+            }
+
+            // 4. Actualizar portfolio images si se proporcionan
+            if (resource.portfolioImages() != null) {
+                // Obtener portfolio actual
+                var currentPortfolioLinks = portfolioInProfileQueryService.handle(
+                        new GetAllPortfolioInProfilesByProviderProfileIdQuery(id)
+                );
+
+                // IMPORTANTE: Eliminar primero las RELACIONES (PortfolioInProfile) antes de eliminar las imágenes
+                currentPortfolioLinks.forEach(link -> {
+                    portfolioInProfileRepository.deleteById(link.getId());
+                });
+
+                // Luego eliminar las imágenes del portfolio
+                currentPortfolioLinks.forEach(link -> {
+                    portfolioImageCommandService.handle(
+                            new DeletePortfolioImageCommand(link.getPortfolio().getId())
+                    );
+                });
+
+                // Crear nuevas imágenes
+                resource.portfolioImages().forEach(imageUrl -> {
+                    var portfolioImageResource = new CreatePortfolioImageResource(imageUrl);
+                    var createCommand = CreatePortfolioImageCommandFromResourceAssembler.toCommandFromResource(portfolioImageResource);
+                    var portfolioImage = portfolioImageCommandService.handle(createCommand);
+                    if (portfolioImage.isPresent()) {
+                        portfolioInProfileCommandService.handle(new CreatePortfolioInProfileCommand(
+                                portfolioImage.get().getId(), id
+                        ));
+                    }
+                });
+            }
+
+            // 5. Obtener el perfil actualizado completo para retornarlo
+            var updatedProfileOpt = providerProfileQueryService.handle(new GetProviderProfileByIdQuery(id));
+            if (updatedProfileOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(new MessageResource("Profile not found after update"));
+            }
+
+            var updatedProfile = updatedProfileOpt.get();
+            var providerOpt = providerQueryService.handle(new GetProviderByIdQuery(updatedProfile.getProviderId()));
+            if (providerOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(new MessageResource("Provider not found"));
+            }
+
+            var provider = providerOpt.get();
+
+            // Obtener socials actualizados
+            var updatedSocialLinks = socialsInProfileQueryService.handle(
+                    new GetAllSocialsInProfileByProviderProfileIdQuery(id)
+            );
+            Map<String, String> socialsMap = updatedSocialLinks.stream()
+                    .map(link -> socialQueryService.handle(new GetSocialByIdQuery(link.getSocial().getId())))
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .collect(Collectors.toMap(
+                            Social::getSocialIcon,
+                            Social::getSocialUrl,
+                            (existing, replacement) -> existing
+                    ));
+
+            // Obtener portfolio actualizado
+            var updatedPortfolioLinks = portfolioInProfileQueryService.handle(
+                    new GetAllPortfolioInProfilesByProviderProfileIdQuery(id)
+            );
+            List<PortfolioImageResource> portfolioImages = updatedPortfolioLinks.stream()
+                    .map(link -> new PortfolioImageResource(link.getId(), link.getPortfolio().getImageUrl()))
+                    .toList();
+
+            // Construir y retornar el recurso completo actualizado
+            var responseResource = new ProfileResource(
+                    updatedProfile.getId(),
+                    provider.getId(),
+                    provider.getCompanyName(),
+                    updatedProfile.getLocation() != null ? updatedProfile.getLocation() : "",
+                    provider.getUser().getEmail(),
+                    updatedProfile.getProfileImageUrl(),
+                    updatedProfile.getCoverImageUrl(),
+                    socialsMap,
+                    portfolioImages
+            );
+
+            return ResponseEntity.ok(responseResource);
 
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(new MessageResource(e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(new MessageResource("Error updating profile"));
+                    .body(new MessageResource("Error updating profile: " + e.getMessage()));
         }
     }
 
