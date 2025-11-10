@@ -448,4 +448,79 @@ public class ProviderProfileController {
         }
     }
 
+    @GetMapping("/search")
+    @Operation(
+            summary = "Search provider profiles by company name",
+            description = "Search provider profiles by company name (partial match, case-insensitive)"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Profiles found"),
+            @ApiResponse(responseCode = "404", description = "No profiles found"),
+            @ApiResponse(responseCode = "400", description = "Invalid input")
+    })
+    public ResponseEntity<?> searchProfilesByCompanyName(@RequestParam String companyName){
+        if (companyName == null || companyName.isBlank()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new MessageResource("Company name cannot be empty"));
+        }
+
+        try {
+            var query = new GetProviderProfilesByCompanyNameQuery(
+                    new com.paxtech.utime.platform.profiles.domain.model.valueobjects.CompanyName(companyName)
+            );
+
+            var profiles = providerProfileQueryService.handle(query);
+
+            if (profiles.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(new MessageResource("No profiles found with company name: " + companyName));
+            }
+
+            // Convertir a ProfileResource (similar a getAllProfiles)
+            List<ProfileResource> resources = profiles.stream().map(profile -> {
+                var provider = providerQueryService
+                        .handle(new GetProviderByIdQuery(profile.getProviderId()))
+                        .orElse(null);
+
+                var socialLinks = socialsInProfileQueryService
+                        .handle(new GetAllSocialsInProfileByProviderProfileIdQuery(profile.getId()));
+
+                Map<String, String> socialsMap = socialLinks.stream()
+                        .map(link -> socialQueryService.handle(new GetSocialByIdQuery(link.getSocial().getId())))
+                        .filter(Optional::isPresent)
+                        .map(Optional::get)
+                        .collect(Collectors.toMap(
+                                Social::getSocialIcon,
+                                Social::getSocialUrl,
+                                (a, b) -> a
+                        ));
+
+                var portfolioLinks = portfolioInProfileQueryService
+                        .handle(new GetAllPortfolioInProfilesByProviderProfileIdQuery(profile.getId()));
+
+                List<PortfolioImageResource> portfolioImages = portfolioLinks.stream()
+                        .map(l -> new PortfolioImageResource(l.getId(), l.getPortfolio().getImageUrl()))
+                        .toList();
+
+                return new ProfileResource(
+                        provider != null ? provider.getId() : null,
+                        profile.getProviderId(),
+                        provider != null ? provider.getCompanyName() : null,
+                        profile.getLocation() != null ? profile.getLocation() : "",
+                        provider != null ? provider.getUser().getEmail() : null,
+                        profile.getProfileImageUrl(),
+                        profile.getCoverImageUrl(),
+                        socialsMap,
+                        portfolioImages
+                );
+            }).toList();
+
+            return ResponseEntity.ok(resources);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new MessageResource("Error searching profiles: " + e.getMessage()));
+        }
+    }
+
 }
