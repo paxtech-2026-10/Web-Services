@@ -1,9 +1,10 @@
 package com.paxtech.utime.platform.reservations.interfaces.rest;
 
 import com.paxtech.utime.platform.profiles.interfaces.acl.ProviderContextFacade;
-import com.paxtech.utime.platform.reservations.domain.model.commands.CreateReservationCommand;
+import com.paxtech.utime.platform.reservations.domain.model.commands.DeleteReservationCommand;
 import com.paxtech.utime.platform.reservations.domain.model.queries.GetAllReservationsQuery;
 import com.paxtech.utime.platform.reservations.domain.model.queries.GetReservationByIdQuery;
+import com.paxtech.utime.platform.shared.interfaces.rest.resources.MessageResource;
 
 import com.paxtech.utime.platform.reservations.domain.services.ReservationCommandService;
 import com.paxtech.utime.platform.reservations.domain.services.ReservationQueryService;
@@ -166,6 +167,35 @@ public class ReservationController {
                 .toList();
 
         return ResponseEntity.ok(resources);
+    }
+
+    /**
+     * Delete a reservation by ID
+     * @param reservationId The reservation ID
+     * @return 204 No Content if successful, 404 Not Found if reservation doesn't exist
+     */
+    @DeleteMapping("/{reservationId}")
+    @Operation(
+            summary = "Delete a reservation",
+            description = "Delete a reservation by ID"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Reservation deleted successfully"),
+            @ApiResponse(responseCode = "404", description = "Reservation not found"),
+            @ApiResponse(responseCode = "400", description = "Invalid input")
+    })
+    public ResponseEntity<?> deleteReservation(@PathVariable Long reservationId) {
+        try {
+            var deleteCommand = new DeleteReservationCommand(reservationId);
+            reservationCommandService.handle(deleteCommand);
+            return ResponseEntity.noContent().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new MessageResource(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new MessageResource("Error deleting reservation: " + e.getMessage()));
+        }
     }
 
 }
