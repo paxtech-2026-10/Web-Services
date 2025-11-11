@@ -26,12 +26,20 @@ public class ReservationDetailsResourceFromEntityAssembler {
                 provider.getCompanyName()
         );
 
-        var worker = workerContextFacade.fetchWorkerById(reservation.getWorkerId()).orElseThrow(() -> new IllegalArgumentException("Worker not found"));
-        var workerDto = new WorkerDto(
-                worker.getId(),
-                worker.getName(),
-                worker.getSpecialization()
-        );
+        // Manejar el caso cuando el Worker ha sido eliminado
+        WorkerDto workerDto;
+        var workerOpt = workerContextFacade.fetchWorkerById(reservation.getWorkerId());
+        if (workerOpt.isPresent()) {
+            var worker = workerOpt.get();
+            workerDto = new WorkerDto(
+                    worker.getId(),
+                    worker.getName(),
+                    worker.getSpecialization()
+            );
+        } else {
+            // Worker eliminado - crear un DTO placeholder
+            workerDto = WorkerDto.deleted(reservation.getWorkerId());
+        }
 
         var timeSlotQuery = new GetTimeSlotByIdQuery(reservation.getTimeSlotId());
         var timeSlotResult = timeSlotQueryService.handle(timeSlotQuery);
@@ -40,10 +48,15 @@ public class ReservationDetailsResourceFromEntityAssembler {
         }
         var timeSLotResource = TimeSlotResourceFromEntityAssembler.toResourceFromEntity(timeSlotResult.get());
 
+        // Manejar el caso cuando el Service ha sido eliminado
         var serviceQuery = new GetServiceByIdQuery(reservation.getServiceId());
         var serviceResult = serviceQueryService.handle(serviceQuery);
-        if (serviceResult.isEmpty()) throw new IllegalArgumentException("Service not found");
-        var serviceResource = ServiceResourceFromEntityAssembler.toResourceFromEntity(serviceResult.get());
+        var serviceResource = serviceResult
+                .map(ServiceResourceFromEntityAssembler::toResourceFromEntity)
+                .orElse(com.paxtech.utime.platform.services.interfaces.rest.resources.ServiceResource.deleted(
+                        reservation.getServiceId(),
+                        reservation.getProviderId()
+                ));
 
         return new ReservationDetailsResource(
                 reservation.getId(),
