@@ -8,7 +8,8 @@ public class CreatePaymentCommandFromResourceAssembler {
         return new CreatePaymentCommand(
                 resource.amount(),
                 resource.currency(),
-                resource.status()
+                resource.reservationId(),
+                resource.clientId()
         );
     }
 }

@@ -9,7 +9,11 @@ public class PaymentResourceFromEntityAssembler {
                 entity.getId(),
                 entity.getMoney().amount(),
                 entity.getMoney().currency(),
-                entity.isStatus()
+                entity.getPaymentStatus(),
+                entity.getStripePaymentLinkId(),
+                entity.getStripeCheckoutSessionId(),
+                entity.getReservationId(),
+                entity.getClientId()
         );
     }
 }
