@@ -35,7 +35,17 @@ public class ClientCommandServiceImpl implements ClientCommandService {
         }
         
         var client = clientOptional.get();
-        client.updateFullName(command.firstName(), command.lastName());
+        
+        // Solo actualizar firstName y lastName si no son null
+        if (command.firstName() != null && command.lastName() != null) {
+            client.updateFullName(command.firstName(), command.lastName());
+        }
+        
+        // Solo actualizar profileImageUrl si no es null
+        if (command.profileImageUrl() != null) {
+            client.updateProfileImageUrl(command.profileImageUrl());
+        }
+        
         var updated = clientRepository.save(client);
         return Optional.of(updated);
     }

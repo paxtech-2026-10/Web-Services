@@ -5,5 +5,6 @@ public record ClientResource(
         Long id,
         String firstName,
         String lastName,
-        Long userId
+        Long userId,
+        String profileImageUrl
 ) {}

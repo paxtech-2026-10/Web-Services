@@ -3,7 +3,7 @@ package com.paxtech.utime.platform.profiles.domain.model.commands;
 /**
  * Command to update a Client entity.
  */
-public record UpdateClientCommand(Long id, String firstName, String lastName) {
+public record UpdateClientCommand(Long id, String firstName, String lastName, String profileImageUrl) {
     
     public UpdateClientCommand {
         if (id == null || id <= 0) {
@@ -17,6 +17,8 @@ public record UpdateClientCommand(Long id, String firstName, String lastName) {
         }
     }
 }
+
+
 
 
 

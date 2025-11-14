@@ -5,9 +5,11 @@ import com.paxtech.utime.platform.profiles.interfaces.rest.resources.UpdateClien
 
 public class UpdateClientCommandFromResourceAssembler {
     public static UpdateClientCommand toCommandFromResource(Long id, UpdateClientResource resource) {
-        return new UpdateClientCommand(id, resource.firstName(), resource.lastName());
+        return new UpdateClientCommand(id, resource.firstName(), resource.lastName(), resource.profileImageUrl());
     }
 }
+
+
 
 
 

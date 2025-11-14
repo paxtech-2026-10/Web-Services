@@ -8,6 +8,7 @@ import com.paxtech.utime.platform.profiles.domain.model.queries.GetClientByIdQue
 import com.paxtech.utime.platform.profiles.domain.model.queries.GetClientByUserIdQuery;
 import com.paxtech.utime.platform.profiles.domain.services.ClientCommandService;
 import com.paxtech.utime.platform.profiles.domain.services.ClientQueryService;
+import com.paxtech.utime.platform.profiles.domain.services.ObjectStorageService;
 import com.paxtech.utime.platform.profiles.interfaces.rest.resources.ClientResource;
 import com.paxtech.utime.platform.profiles.interfaces.rest.resources.CreateClientResource;
 import com.paxtech.utime.platform.profiles.interfaces.rest.resources.UpdateClientResource;
@@ -27,6 +28,7 @@ import org.springframework.web.bind.annotation.*;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Optional;
@@ -48,6 +50,8 @@ public class ClientsController {
     private final ClientCommandService clientCommandService;
     private final ClientQueryService clientsQueryService;
     private final UserRepository userRepository;
+    private final ObjectStorageService objectStorageService;
+
 
     /**
      * Constructor
@@ -55,10 +59,11 @@ public class ClientsController {
      * @param clientsQueryService The service responsible for query operations (retrieve clients)
      * @param userRepository The repository used to fetch User entities
      */
-    public ClientsController(ClientCommandService clientCommandService, ClientQueryService clientsQueryService, UserRepository userRepository) {
+    public ClientsController(ClientCommandService clientCommandService, ClientQueryService clientsQueryService, UserRepository userRepository, ObjectStorageService objectStorageService) {
         this.clientCommandService = clientCommandService;
         this.clientsQueryService = clientsQueryService;
         this.userRepository = userRepository;
+        this.objectStorageService = objectStorageService;
     }
 
     /**
@@ -218,4 +223,65 @@ public class ClientsController {
         }
     }
 
+    @Operation(
+            summary = "Upload client profile image",
+            description = "Upload a profile image for a client. Accepts JPEG, PNG WEBP, GIF up to 5MB"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Image uploaded successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid file or request"),
+            @ApiResponse(responseCode = "404", description = "Client not found"),
+            @ApiResponse(responseCode = "500", description = "Error uploading image")
+    })
+    @PostMapping(value = "/{id}/profile-image", consumes = "multipart/form-data")
+    public ResponseEntity<?> uploadProfileImage(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file) {
+        try {
+            var clientOpt = clientsQueryService.handle(new GetClientByIdQuery(id));
+            if (clientOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(new MessageResource("Client not found"));
+            }
+            var client = clientOpt.get();
+            if (client.getProfileImageUrl() != null && !client.getProfileImageUrl().isEmpty()) {
+                try {
+                    objectStorageService.deleteProfileImage(client.getProfileImageUrl());
+                } catch (Exception e) {
+                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                            .body(new MessageResource("Error deleting profile image"));
+                }
+            }
+            // Validar y subir la nueva imagen
+            byte[] fileContent = file.getBytes();
+            String contentType = file.getContentType();
+            objectStorageService.validateImageFile(fileContent, contentType, file.getSize());
+
+            String imageUrl = objectStorageService.uploadProfileImage(fileContent, contentType, id);
+
+            // Actualizar el cliente con la nueva URL
+            var updateCommand = new UpdateClientCommand(
+                    id,
+                    null,  // firstName sin cambios
+                    null,  // lastName sin cambios
+                    imageUrl  // nueva URL de imagen
+            );
+
+            var updated = clientCommandService.handle(updateCommand);
+
+            if (updated.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(new MessageResource("Error updating client"));
+            }
+
+            return ResponseEntity.ok(ClientResourceFrontEntityAssembler.toResourceFromEntity(updated.get()));
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new MessageResource(e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new MessageResource("Error uploading image: " + e.getMessage()));
+        }
+    }
 }

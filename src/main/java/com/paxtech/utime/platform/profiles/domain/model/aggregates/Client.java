@@ -5,9 +5,11 @@ import com.paxtech.utime.platform.profiles.domain.model.commands.CreateClientCom
 import com.paxtech.utime.platform.profiles.domain.model.valueobjects.*;
 import com.paxtech.utime.platform.shared.domain.model.aggregates.AuditableAbstractAggregateRoot;
 import jakarta.persistence.*;
+import lombok.Getter;
 
 
 @Entity
+@Getter
 public class Client extends AuditableAbstractAggregateRoot<Client> {
 
     @Embedded
@@ -16,6 +18,9 @@ public class Client extends AuditableAbstractAggregateRoot<Client> {
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;
+
+    @Column(name = "profile_image_url", length = 500)
+    private String profileImageUrl;
 
     public Client(CreateClientCommand command, User user) {
         this.fullName = new FullName(command.firstName(), command.lastName());
@@ -47,5 +52,9 @@ public class Client extends AuditableAbstractAggregateRoot<Client> {
             throw new IllegalArgumentException("Last name cannot be null or empty");
         }
         this.fullName = new FullName(firstName, lastName);
+    }
+
+    public void updateProfileImageUrl(String profileImageUrl){
+        this.profileImageUrl = profileImageUrl;
     }
 }

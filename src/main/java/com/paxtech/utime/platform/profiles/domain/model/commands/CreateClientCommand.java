@@ -15,4 +15,5 @@ public record CreateClientCommand(String firstName, String lastName, Long userId
         if (userId == null)
             throw new IllegalArgumentException("User ID cannot be null");
     }
+
 }

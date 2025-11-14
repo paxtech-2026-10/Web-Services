@@ -5,7 +5,8 @@ package com.paxtech.utime.platform.profiles.interfaces.rest.resources;
  */
 public record UpdateClientResource(
     String firstName,
-    String lastName
+    String lastName,
+    String profileImageUrl
 ) {
     public UpdateClientResource {
         if (firstName == null || firstName.isBlank()) {
@@ -16,6 +17,8 @@ public record UpdateClientResource(
         }
     }
 }
+
+
 
 
 

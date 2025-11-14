@@ -9,7 +9,8 @@ public class ClientResourceFrontEntityAssembler {
                 entity.getId(),
                 entity.getFirstName(),
                 entity.getLastName(),
-                entity.getUser().getId()
+                entity.getUser().getId(),
+                entity.getProfileImageUrl()
         );
     }
 }

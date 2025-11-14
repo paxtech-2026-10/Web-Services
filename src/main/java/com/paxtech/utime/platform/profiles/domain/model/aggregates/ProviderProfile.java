@@ -30,6 +30,9 @@ public class ProviderProfile extends AuditableAbstractAggregateRoot<ProviderProf
     @OneToMany(mappedBy = "providerProfile", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PortfolioInProfile> portfolioImages;
 
+    @OneToMany(mappedBy = "providerProfile", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Discount> discounts;
+
    /* @OneToOne(mappedBy = "providerProfile", fetch = FetchType.LAZY)
     private Provider provider;*/
 
