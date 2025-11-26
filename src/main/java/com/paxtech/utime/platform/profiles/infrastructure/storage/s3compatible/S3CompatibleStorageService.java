@@ -60,6 +60,16 @@ public abstract class S3CompatibleStorageService implements ObjectStorageService
         // Remover el prefijo "profiles/" ya que el bucket ya se llama "profiles"
         return String.format("clients/%d/%s%s", clientId, UUID.randomUUID(), extension);
     }
+
+    protected String generateProviderProfileFileName(Long providerId, String contentType) {
+        String extension = getExtensionFromContentType(contentType);
+        return String.format("providers/%d/profile/%s%s", providerId, UUID.randomUUID(), extension);
+    }
+
+    protected String generateProviderCoverFileName(Long providerId, String contentType) {
+        String extension = getExtensionFromContentType(contentType);
+        return String.format("providers/%d/cover/%s%s", providerId, UUID.randomUUID(), extension);
+    }
     private String getExtensionFromContentType(String contentType) {
         if (contentType == null) return ".jpg";
 
@@ -281,5 +291,135 @@ public abstract class S3CompatibleStorageService implements ObjectStorageService
             }
         }
         logger.info("=== deleteProfileImage completado ===");
+    }
+
+    @Override
+    public String uploadProviderProfileImage(byte[] fileContent, String contentType, Long providerId) throws IOException {
+        logger.info("=== uploadProviderProfileImage iniciado ===");
+        logger.info("Provider ID: {}", providerId);
+        logger.info("Content-Type: {}", contentType);
+        
+        String fileName = generateProviderProfileFileName(providerId, contentType);
+        logger.info("Generated file name: {}", fileName);
+        
+        String uploadUrl = buildUploadUrl(fileName);
+        logger.info("Upload URL construida: {}", uploadUrl);
+        
+        String publicUrl = buildPublicUrl(fileName);
+        logger.info("Public URL construida: {}", publicUrl);
+
+        // Subir el archivo
+        uploadFile(fileContent, contentType, uploadUrl);
+
+        logger.info("=== uploadProviderProfileImage completado ===");
+        return publicUrl;
+    }
+
+    @Override
+    public String uploadProviderCoverImage(byte[] fileContent, String contentType, Long providerId) throws IOException {
+        logger.info("=== uploadProviderCoverImage iniciado ===");
+        logger.info("Provider ID: {}", providerId);
+        logger.info("Content-Type: {}", contentType);
+        
+        String fileName = generateProviderCoverFileName(providerId, contentType);
+        logger.info("Generated file name: {}", fileName);
+        
+        String uploadUrl = buildUploadUrl(fileName);
+        logger.info("Upload URL construida: {}", uploadUrl);
+        
+        String publicUrl = buildPublicUrl(fileName);
+        logger.info("Public URL construida: {}", publicUrl);
+
+        // Subir el archivo
+        uploadFile(fileContent, contentType, uploadUrl);
+
+        logger.info("=== uploadProviderCoverImage completado ===");
+        return publicUrl;
+    }
+
+    @Override
+    public void deleteProviderImage(String fileUrl) throws IOException {
+        logger.info("=== deleteProviderImage iniciado ===");
+        logger.info("File URL: {}", fileUrl);
+        
+        String filePath = extractFilePathFromUrl(fileUrl);
+        logger.info("Extracted file path: {}", filePath);
+        
+        String deleteUrl = buildDeleteUrl(filePath);
+        logger.info("Delete URL: {}", deleteUrl);
+
+        Request.Builder requestBuilder = new Request.Builder()
+                .url(deleteUrl);
+
+        // Si hay un signer AWS, usarlo para firmar el request
+        AwsSignatureV4Signer signer = getAwsSigner();
+        if (signer != null) {
+            logger.info("Usando AWS Signature V4 para eliminar archivo");
+            Request tempRequest = requestBuilder.delete().build();
+            try {
+                Request signedRequest = signer.signRequest(tempRequest, null);
+                try (Response response = httpClient.newCall(signedRequest).execute()) {
+                    logger.info("Respuesta de eliminación - Status: {}", response.code());
+                    if (!response.isSuccessful() && response.code() != 404) {
+                        throw new IOException(
+                                String.format("Error al eliminar archivo: %s - %s",
+                                        response.code(), response.message())
+                        );
+                    }
+                    logger.info("Archivo eliminado exitosamente");
+                }
+                return;
+            } catch (Exception e) {
+                logger.error("Error al firmar request de eliminación: {}", e.getMessage(), e);
+                throw new IOException("Error al firmar request: " + e.getMessage(), e);
+            }
+        }
+
+        // Si no hay signer, usar método tradicional (API REST nativa)
+        logger.info("Usando autenticación con headers para eliminar (API REST nativa)");
+        String authHeader = getAuthorizationHeader();
+        if (authHeader != null && !authHeader.isEmpty()) {
+            requestBuilder.addHeader("Authorization", authHeader);
+            logger.info("Authorization header agregado");
+        }
+
+        String apiKey = getApiKeyHeader();
+        if (apiKey != null && !apiKey.isEmpty()) {
+            requestBuilder.addHeader("apikey", apiKey);
+            logger.info("apikey header agregado");
+        }
+
+        Request request = requestBuilder.delete().build();
+        logger.info("Enviando request DELETE a: {}", request.url());
+
+        try (Response response = httpClient.newCall(request).execute()) {
+            logger.info("Respuesta de eliminación - Status: {}, Message: {}", response.code(), response.message());
+            
+            String errorBody = "";
+            if (response.body() != null) {
+                errorBody = response.body().string();
+            }
+            
+            boolean isNotFound = response.code() == 404 || 
+                                (response.code() == 400 && 
+                                 (errorBody.contains("not_found") || 
+                                  errorBody.contains("Object not found") ||
+                                  errorBody.contains("\"statusCode\":\"404\"")));
+            
+            if (!response.isSuccessful() && !isNotFound) {
+                logger.error("Error al eliminar archivo: Status={}, Body={}", response.code(), errorBody);
+                throw new IOException(
+                        String.format("Error al eliminar archivo: %s - %s - %s",
+                                response.code(), response.message(), errorBody)
+                );
+            }
+            
+            if (isNotFound) {
+                logger.info("Archivo no encontrado (ya fue eliminado o no existe) - esto es normal");
+            } else {
+                logger.info("Archivo eliminado exitosamente");
+            }
+        }
+        logger.info("=== deleteProviderImage completado ===");
     }
 }

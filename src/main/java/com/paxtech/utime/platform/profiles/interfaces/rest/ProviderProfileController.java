@@ -19,6 +19,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -27,6 +30,8 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/v1/provider-profiles")
 @Tag(name = "Provider Profiles", description = "Endpoints for managing provider profiles and their relations")
 public class ProviderProfileController {
+
+    private static final Logger logger = LoggerFactory.getLogger(ProviderProfileController.class);
 
     private final ProviderProfileQueryService providerProfileQueryService;
     private final ProviderQueryService providerQueryService;
@@ -41,6 +46,7 @@ public class ProviderProfileController {
     private final ProviderCommandService providerCommandService;
     private final SocialInProfileRepository socialInProfileRepository;
     private final PortfolioInProfileRepository portfolioInProfileRepository;
+    private final ObjectStorageService objectStorageService;
 
 
     public ProviderProfileController(
@@ -56,7 +62,8 @@ public class ProviderProfileController {
             PortfolioInProfileCommandService portfolioInProfileCommandService, 
             ProviderCommandService providerCommandService,
             SocialInProfileRepository socialInProfileRepository,
-            PortfolioInProfileRepository portfolioInProfileRepository) {
+            PortfolioInProfileRepository portfolioInProfileRepository,
+            ObjectStorageService objectStorageService) {
         this.providerProfileQueryService = providerProfileQueryService;
         this.providerQueryService = providerQueryService;
         this.socialsInProfileQueryService = socialsInProfileQueryService;
@@ -70,6 +77,7 @@ public class ProviderProfileController {
         this.providerCommandService = providerCommandService;
         this.socialInProfileRepository = socialInProfileRepository;
         this.portfolioInProfileRepository = portfolioInProfileRepository;
+        this.objectStorageService = objectStorageService;
     }
 
     @GetMapping("/{id}")
@@ -574,6 +582,134 @@ public class ProviderProfileController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new MessageResource("Error searching profiles: " + e.getMessage()));
+        }
+    }
+
+    @Operation(
+            summary = "Upload provider profile image",
+            description = "Upload a profile image for a provider profile. Accepts JPEG, PNG, WEBP, GIF up to 5MB"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Profile image uploaded successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid file or request"),
+            @ApiResponse(responseCode = "404", description = "Provider profile not found"),
+            @ApiResponse(responseCode = "500", description = "Error uploading image")
+    })
+    @PostMapping(value = "/{id}/profile-image", consumes = "multipart/form-data")
+    public ResponseEntity<?> uploadProfileImage(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file) {
+        try {
+            var profileOpt = providerProfileQueryService.handle(new GetProviderProfileByIdQuery(id));
+            if (profileOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(new MessageResource("Provider profile not found"));
+            }
+            var profile = profileOpt.get();
+
+            // Eliminar la imagen anterior si existe
+            if (profile.getProfileImageUrl() != null && !profile.getProfileImageUrl().isEmpty() 
+                    && !profile.getProfileImageUrl().equals("to Choose")) {
+                try {
+                    objectStorageService.deleteProviderImage(profile.getProfileImageUrl());
+                } catch (Exception e) {
+                    logger.warn("No se pudo eliminar la imagen anterior (puede que no exista): {}", e.getMessage());
+                }
+            }
+
+            // Validar y subir la nueva imagen
+            byte[] fileContent = file.getBytes();
+            String contentType = file.getContentType();
+            objectStorageService.validateImageFile(fileContent, contentType, file.getSize());
+
+            String imageUrl = objectStorageService.uploadProviderProfileImage(fileContent, contentType, profile.getProviderId());
+
+            // Actualizar el perfil con la nueva URL
+            profile.updateProfileImageUrl(imageUrl);
+            providerProfileCommandService.handle(new UpdateProviderProfileCommand(
+                    id,
+                    imageUrl,
+                    profile.getCoverImageUrl(),
+                    profile.getLocation(),
+                    null,  // companyName sin cambios
+                    null,  // socials sin cambios
+                    null   // portfolioImages sin cambios
+            ));
+
+            // Obtener el perfil actualizado completo para retornarlo
+            return getFullProfile(id);
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new MessageResource(e.getMessage()));
+        } catch (Exception e) {
+            logger.error("Error uploading profile image: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new MessageResource("Error uploading image: " + e.getMessage()));
+        }
+    }
+
+    @Operation(
+            summary = "Upload provider cover image",
+            description = "Upload a cover image for a provider profile. Accepts JPEG, PNG, WEBP, GIF up to 5MB"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Cover image uploaded successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid file or request"),
+            @ApiResponse(responseCode = "404", description = "Provider profile not found"),
+            @ApiResponse(responseCode = "500", description = "Error uploading image")
+    })
+    @PostMapping(value = "/{id}/cover-image", consumes = "multipart/form-data")
+    public ResponseEntity<?> uploadCoverImage(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file) {
+        try {
+            var profileOpt = providerProfileQueryService.handle(new GetProviderProfileByIdQuery(id));
+            if (profileOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(new MessageResource("Provider profile not found"));
+            }
+            var profile = profileOpt.get();
+
+            // Eliminar la imagen anterior si existe
+            if (profile.getCoverImageUrl() != null && !profile.getCoverImageUrl().isEmpty() 
+                    && !profile.getCoverImageUrl().equals("to Choose")) {
+                try {
+                    objectStorageService.deleteProviderImage(profile.getCoverImageUrl());
+                } catch (Exception e) {
+                    logger.warn("No se pudo eliminar la imagen de cover anterior (puede que no exista): {}", e.getMessage());
+                }
+            }
+
+            // Validar y subir la nueva imagen
+            byte[] fileContent = file.getBytes();
+            String contentType = file.getContentType();
+            objectStorageService.validateImageFile(fileContent, contentType, file.getSize());
+
+            String imageUrl = objectStorageService.uploadProviderCoverImage(fileContent, contentType, profile.getProviderId());
+
+            // Actualizar el perfil con la nueva URL
+            profile.updateCoverImageUrl(imageUrl);
+            providerProfileCommandService.handle(new UpdateProviderProfileCommand(
+                    id,
+                    profile.getProfileImageUrl(),
+                    imageUrl,
+                    profile.getLocation(),
+                    null,  // companyName sin cambios
+                    null,  // socials sin cambios
+                    null   // portfolioImages sin cambios
+            ));
+
+            // Obtener el perfil actualizado completo para retornarlo
+            return getFullProfile(id);
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new MessageResource(e.getMessage()));
+        } catch (Exception e) {
+            logger.error("Error uploading cover image: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new MessageResource("Error uploading image: " + e.getMessage()));
         }
     }
 

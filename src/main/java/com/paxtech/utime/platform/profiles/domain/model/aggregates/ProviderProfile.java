@@ -52,6 +52,14 @@ public class ProviderProfile extends AuditableAbstractAggregateRoot<ProviderProf
         return this;
     }
 
+    public void updateProfileImageUrl(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
+    }
+
+    public void updateCoverImageUrl(String coverImageUrl) {
+        this.coverImageUrl = coverImageUrl;
+    }
+
     public ProviderProfile() {}
 
     public ProviderProfile(CreateProviderProfileCommand command) {
