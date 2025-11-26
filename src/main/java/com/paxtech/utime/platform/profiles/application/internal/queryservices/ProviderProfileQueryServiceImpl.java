@@ -4,6 +4,7 @@ import com.paxtech.utime.platform.profiles.domain.model.aggregates.Provider;
 import com.paxtech.utime.platform.profiles.domain.model.aggregates.ProviderProfile;
 import com.paxtech.utime.platform.profiles.domain.model.queries.GetAllProviderProfilesQuery;
 import com.paxtech.utime.platform.profiles.domain.model.queries.GetProviderProfileByIdQuery;
+import com.paxtech.utime.platform.profiles.domain.model.queries.GetProviderProfileByProviderIdQuery;
 import com.paxtech.utime.platform.profiles.domain.model.queries.GetProviderProfilesByCompanyNameQuery;
 import com.paxtech.utime.platform.profiles.domain.services.ProviderProfileQueryService;
 import com.paxtech.utime.platform.profiles.infrastructure.persistence.jpa.repositories.ProviderProfileRepository;
@@ -12,7 +13,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class ProviderProfileQueryServiceImpl implements ProviderProfileQueryService {
@@ -27,6 +27,11 @@ public class ProviderProfileQueryServiceImpl implements ProviderProfileQueryServ
     @Override
     public Optional<ProviderProfile> handle(GetProviderProfileByIdQuery query) {
         return providerProfileRepository.findById(query.id());
+    }
+
+    @Override
+    public Optional<ProviderProfile> handle(GetProviderProfileByProviderIdQuery query) {
+        return providerProfileRepository.findByProviderId(query.providerId());
     }
 
     @Override

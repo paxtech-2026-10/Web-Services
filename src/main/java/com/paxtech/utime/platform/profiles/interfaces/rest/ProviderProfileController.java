@@ -123,6 +123,60 @@ public class ProviderProfileController {
         return ResponseEntity.ok(resource);
     }
 
+    @GetMapping("/provider/{providerId}")
+    @Operation(
+            summary = "Get provider profile by provider ID",
+            description = "Retrieve a provider profile by the provider ID (not the profile ID)"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Profile found"),
+            @ApiResponse(responseCode = "404", description = "Profile not found")
+    })
+    public ResponseEntity<?> getProfileByProviderId(@PathVariable Long providerId) {
+        var profileOpt = providerProfileQueryService.handle(new GetProviderProfileByProviderIdQuery(providerId));
+        if (profileOpt.isEmpty())
+            return ResponseEntity.status(404).body(new MessageResource("Profile not found for provider ID: " + providerId));
+
+        var profile = profileOpt.get();
+
+        var providerQuery = new GetProviderByIdQuery(profile.getProviderId());
+        var providerOpt = providerQueryService.handle(providerQuery);
+        if (providerOpt.isEmpty())
+            return ResponseEntity.status(404).body(new MessageResource("Provider not found"));
+
+        var provider = providerOpt.get();
+
+        // Relaciones
+        var socialLinks = socialsInProfileQueryService.handle(new GetAllSocialsInProfileByProviderProfileIdQuery(profile.getId()));
+        Map<String, String> socialsMap = socialLinks.stream()
+                .map(link -> socialQueryService.handle(new GetSocialByIdQuery(link.getSocial().getId())))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toMap(
+                        Social::getSocialIcon,
+                        Social::getSocialUrl,
+                        (existing, replacement) -> existing
+                ));
+
+        var portfolioLinks = portfolioInProfileQueryService.handle(new GetAllPortfolioInProfilesByProviderProfileIdQuery(profile.getId()));
+        List<PortfolioImageResource> portfolioImages = portfolioLinks.stream()
+                .map(link -> new PortfolioImageResource(link.getId(), link.getPortfolio().getImageUrl()))
+                .toList();
+
+        var resource = new ProfileResource(
+                profile.getId(),
+                provider.getId(),
+                provider.getCompanyName(),
+                profile.getLocation() != null ? profile.getLocation() : "",
+                provider.getUser().getEmail(),
+                profile.getProfileImageUrl(),
+                profile.getCoverImageUrl(),
+                socialsMap,
+                portfolioImages
+        );
+
+        return ResponseEntity.ok(resource);
+    }
 
     @PostMapping
     @Operation(summary = "Create a new profile", description = "Create a new profile")
