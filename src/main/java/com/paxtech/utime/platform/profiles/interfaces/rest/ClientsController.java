@@ -29,6 +29,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.multipart.MultipartFile;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Optional;
@@ -46,6 +48,8 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 @RequestMapping(value = "/api/v1/clients", produces = APPLICATION_JSON_VALUE)
 @Tag(name = "Clients", description = "Endpoints for client management")
 public class ClientsController {
+
+    private static final Logger logger = LoggerFactory.getLogger(ClientsController.class);
 
     private final ClientCommandService clientCommandService;
     private final ClientQueryService clientsQueryService;
@@ -248,8 +252,9 @@ public class ClientsController {
                 try {
                     objectStorageService.deleteProfileImage(client.getProfileImageUrl());
                 } catch (Exception e) {
-                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                            .body(new MessageResource("Error deleting profile image"));
+                    // Log el error pero no fallar - el archivo puede no existir
+                    logger.warn("No se pudo eliminar la imagen anterior (puede que no exista): {}", e.getMessage());
+                    // Continuar con la subida de la nueva imagen
                 }
             }
             // Validar y subir la nueva imagen

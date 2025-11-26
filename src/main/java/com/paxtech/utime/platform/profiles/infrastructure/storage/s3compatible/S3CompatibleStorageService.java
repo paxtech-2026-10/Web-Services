@@ -252,15 +252,33 @@ public abstract class S3CompatibleStorageService implements ObjectStorageService
 
         try (Response response = httpClient.newCall(request).execute()) {
             logger.info("Respuesta de eliminación - Status: {}, Message: {}", response.code(), response.message());
-            if (!response.isSuccessful() && response.code() != 404) {
-                String errorBody = response.body() != null ? response.body().string() : "";
+            
+            // Leer el body para verificar si es un error de "not found"
+            String errorBody = "";
+            if (response.body() != null) {
+                errorBody = response.body().string();
+            }
+            
+            // Verificar si es un error que debemos ignorar (404 o 400 con "not found")
+            boolean isNotFound = response.code() == 404 || 
+                                (response.code() == 400 && 
+                                 (errorBody.contains("not_found") || 
+                                  errorBody.contains("Object not found") ||
+                                  errorBody.contains("\"statusCode\":\"404\"")));
+            
+            if (!response.isSuccessful() && !isNotFound) {
                 logger.error("Error al eliminar archivo: Status={}, Body={}", response.code(), errorBody);
                 throw new IOException(
                         String.format("Error al eliminar archivo: %s - %s - %s",
                                 response.code(), response.message(), errorBody)
                 );
             }
-            logger.info("Archivo eliminado exitosamente (o no existía)");
+            
+            if (isNotFound) {
+                logger.info("Archivo no encontrado (ya fue eliminado o no existe) - esto es normal");
+            } else {
+                logger.info("Archivo eliminado exitosamente");
+            }
         }
         logger.info("=== deleteProfileImage completado ===");
     }

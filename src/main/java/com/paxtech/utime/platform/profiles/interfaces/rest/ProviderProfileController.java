@@ -256,7 +256,7 @@ public class ProviderProfileController {
 
             /* 2D. Construir recurso */
             return new ProfileResource(
-                    provider != null ? provider.getId() : null,
+                    profile.getId(),
                     profile.getProviderId(),
                     provider != null ? provider.getCompanyName() : null,
                     profile.getLocation() != null ? profile.getLocation() : "",
@@ -503,7 +503,7 @@ public class ProviderProfileController {
                         .toList();
 
                 return new ProfileResource(
-                        provider != null ? provider.getId() : null,
+                        profile.getId(),
                         profile.getProviderId(),
                         provider != null ? provider.getCompanyName() : null,
                         profile.getLocation() != null ? profile.getLocation() : "",
