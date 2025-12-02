@@ -1,6 +1,7 @@
 package com.paxtech.utime.platform.profiles.interfaces.rest.resources;
 
 
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
 
@@ -13,5 +14,8 @@ public record ProfileResource(
         String profileImageUrl,
         String coverImageUrl,
         Map<String, String> socials,
-        List<PortfolioImageResource> portfolioImages
+        List<PortfolioImageResource> portfolioImages,
+        String description,
+        LocalTime openTime,
+        LocalTime closeTime
 ) {}

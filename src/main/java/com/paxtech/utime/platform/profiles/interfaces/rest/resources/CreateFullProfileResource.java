@@ -1,5 +1,6 @@
 package com.paxtech.utime.platform.profiles.interfaces.rest.resources;
 
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
 
@@ -11,5 +12,8 @@ public record CreateFullProfileResource(
         String profileImageUrl,
         String coverImageUrl,
         Map<String, String> socials,      // ej: {"instagram": "url"}
-        List<String> portfolioImages      // ej: ["https://img1", "https://img2"]
+        List<String> portfolioImages,     // ej: ["https://img1", "https://img2"]
+        String description,
+        LocalTime openTime,
+        LocalTime closeTime
 ) {}

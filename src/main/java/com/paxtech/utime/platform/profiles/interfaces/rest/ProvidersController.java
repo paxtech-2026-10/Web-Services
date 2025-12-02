@@ -86,7 +86,7 @@ public class ProvidersController {
         Optional<Provider> provider = providerCommandService.handle(command, userOptional.get());
 
         //Create ProviderProfile
-        var createdProfileCommand = new CreateProviderProfileCommand("to Choose", "to Choose", "", provider.get().getId());
+        var createdProfileCommand = new CreateProviderProfileCommand("to Choose", "to Choose", "", provider.get().getId(), null, null, null);
         providerProfileCommandService.handle(createdProfileCommand);
         // Return 201 Created if successful, otherwise 400 Bad Request
         return provider

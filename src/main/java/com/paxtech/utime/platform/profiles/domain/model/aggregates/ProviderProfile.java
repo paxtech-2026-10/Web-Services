@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalTime;
 import java.util.List;
 
 @Entity
@@ -21,6 +22,15 @@ public class ProviderProfile extends AuditableAbstractAggregateRoot<ProviderProf
 
     @Column(name = "location", length = 200)
     private String location;
+
+    @Column(name = "description", length = 1000)
+    private String description;
+
+    @Column(name = "open_time")
+    private LocalTime openTime;
+
+    @Column(name = "close_time")
+    private LocalTime closeTime;
 
     // Relaciones hacia otras entidades
 
@@ -39,7 +49,7 @@ public class ProviderProfile extends AuditableAbstractAggregateRoot<ProviderProf
     @Column(name = "provider_id", nullable = false, unique = true)
     private Long providerId;
 
-    public ProviderProfile updateInformation(String profileUrl, String coverUrl, String location) {
+    public ProviderProfile updateInformation(String profileUrl, String coverUrl, String location, String description, LocalTime openTime, LocalTime closeTime) {
         if (profileUrl != null){
             this.profileImageUrl = profileUrl;
         }
@@ -49,7 +59,28 @@ public class ProviderProfile extends AuditableAbstractAggregateRoot<ProviderProf
         if (location != null){
             this.location = location;
         }
+        if (description != null){
+            this.description = description;
+        }
+        if (openTime != null){
+            this.openTime = openTime;
+        }
+        if (closeTime != null){
+            this.closeTime = closeTime;
+        }
         return this;
+    }
+
+    public void updateDescription(String description) {
+        this.description = description;
+    }
+
+    public void updateOpenTime(LocalTime openTime) {
+        this.openTime = openTime;
+    }
+
+    public void updateCloseTime(LocalTime closeTime) {
+        this.closeTime = closeTime;
     }
 
     public void updateProfileImageUrl(String profileImageUrl) {
@@ -67,6 +98,9 @@ public class ProviderProfile extends AuditableAbstractAggregateRoot<ProviderProf
         this.coverImageUrl = command.coverUrl();
         this.location = command.location();
         this.providerId = command.providerId();
+        this.description = command.description();
+        this.openTime = command.openTime();
+        this.closeTime = command.closeTime();
     }
 
 

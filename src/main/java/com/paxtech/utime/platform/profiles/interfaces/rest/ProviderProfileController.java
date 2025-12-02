@@ -124,7 +124,10 @@ public class ProviderProfileController {
                 profile.getProfileImageUrl(),
                 profile.getCoverImageUrl(),
                 socialsMap,
-                portfolioImages
+                portfolioImages,
+                profile.getDescription(),
+                profile.getOpenTime(),
+                profile.getCloseTime()
         );
 
 
@@ -180,7 +183,10 @@ public class ProviderProfileController {
                 profile.getProfileImageUrl(),
                 profile.getCoverImageUrl(),
                 socialsMap,
-                portfolioImages
+                portfolioImages,
+                profile.getDescription(),
+                profile.getOpenTime(),
+                profile.getCloseTime()
         );
 
         return ResponseEntity.ok(resource);
@@ -197,7 +203,10 @@ public class ProviderProfileController {
                 resource.profileImageUrl(),
                 resource.coverImageUrl(),
                 resource.location(),
-                resource.providerId()
+                resource.providerId(),
+                resource.description(),
+                resource.openTime(),
+                resource.closeTime()
         );
         var createProviderProfileCommand =
                 CreateProviderProfileCommandFromResourceAssembler.toCommandFromResource(providerProfileResource);
@@ -246,7 +255,10 @@ public class ProviderProfileController {
                         providerProfile.get().getProfileImageUrl(),
                         providerProfile.get().getCoverImageUrl(),
                         resource.socials(),
-                        portfolioResources
+                        portfolioResources,
+                        providerProfile.get().getDescription(),
+                        providerProfile.get().getOpenTime(),
+                        providerProfile.get().getCloseTime()
                 )
         );
     }
@@ -326,7 +338,10 @@ public class ProviderProfileController {
                     profile.getProfileImageUrl(),
                     profile.getCoverImageUrl(),
                     socialsMap,
-                    portfolioImages
+                    portfolioImages,
+                    profile.getDescription(),
+                    profile.getOpenTime(),
+                    profile.getCloseTime()
             );
         }).toList();
 
@@ -362,7 +377,10 @@ public class ProviderProfileController {
                     resource.location(),
                     resource.companyName(),
                     resource.socials(),
-                    resource.portfolioImages()
+                    resource.portfolioImages(),
+                    resource.description(),
+                    resource.openTime(),
+                    resource.closeTime()
             );
 
             var updated = providerProfileCommandService.handle(command);
@@ -496,7 +514,10 @@ public class ProviderProfileController {
                     updatedProfile.getProfileImageUrl(),
                     updatedProfile.getCoverImageUrl(),
                     socialsMap,
-                    portfolioImages
+                    portfolioImages,
+                    updatedProfile.getDescription(),
+                    updatedProfile.getOpenTime(),
+                    updatedProfile.getCloseTime()
             );
 
             return ResponseEntity.ok(responseResource);
@@ -573,7 +594,10 @@ public class ProviderProfileController {
                         profile.getProfileImageUrl(),
                         profile.getCoverImageUrl(),
                         socialsMap,
-                        portfolioImages
+                        portfolioImages,
+                        profile.getDescription(),
+                        profile.getOpenTime(),
+                        profile.getCloseTime()
                 );
             }).toList();
 
@@ -633,7 +657,10 @@ public class ProviderProfileController {
                     profile.getLocation(),
                     null,  // companyName sin cambios
                     null,  // socials sin cambios
-                    null   // portfolioImages sin cambios
+                    null,  // portfolioImages sin cambios
+                    profile.getDescription(),  // description sin cambios
+                    profile.getOpenTime(),      // openTime sin cambios
+                    profile.getCloseTime()      // closeTime sin cambios
             ));
 
             // Obtener el perfil actualizado completo para retornarlo
@@ -697,7 +724,10 @@ public class ProviderProfileController {
                     profile.getLocation(),
                     null,  // companyName sin cambios
                     null,  // socials sin cambios
-                    null   // portfolioImages sin cambios
+                    null,  // portfolioImages sin cambios
+                    profile.getDescription(),  // description sin cambios
+                    profile.getOpenTime(),      // openTime sin cambios
+                    profile.getCloseTime()      // closeTime sin cambios
             ));
 
             // Obtener el perfil actualizado completo para retornarlo
