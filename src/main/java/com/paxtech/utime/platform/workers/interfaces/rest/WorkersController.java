@@ -1,6 +1,9 @@
 package com.paxtech.utime.platform.workers.interfaces.rest;
 
+import com.paxtech.utime.platform.profiles.domain.services.ObjectStorageService;
+import com.paxtech.utime.platform.shared.interfaces.rest.resources.MessageResource;
 import com.paxtech.utime.platform.workers.domain.model.commands.DeleteWorkerCommand;
+import com.paxtech.utime.platform.workers.domain.model.commands.UpdateWorkerCommand;
 import com.paxtech.utime.platform.workers.domain.model.queries.GetAllWorkersQuery;
 import com.paxtech.utime.platform.workers.domain.model.queries.GetWorkerByIdQuery;
 import com.paxtech.utime.platform.workers.domain.services.WorkerCommandService;
@@ -15,10 +18,13 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -33,17 +39,25 @@ import java.util.List;
 @Tag(name = "Workers", description = "Available Worker Endpoints")
 public class WorkersController {
 
+    private static final Logger logger = LoggerFactory.getLogger(WorkersController.class);
+
     private final WorkerCommandService workerCommandService;
     private final WorkerQueryService workerQueryService;
+    private final ObjectStorageService objectStorageService;
 
     /**
      * Constructor
      * @param workerCommandService Service to handle worker creation commands
      * @param workerQueryService Service to handle worker retrieval queries
+     * @param objectStorageService Service to handle object storage operations
      */
-    public WorkersController(WorkerCommandService workerCommandService, WorkerQueryService workerQueryService) {
+    public WorkersController(
+            WorkerCommandService workerCommandService, 
+            WorkerQueryService workerQueryService,
+            ObjectStorageService objectStorageService) {
         this.workerCommandService = workerCommandService;
         this.workerQueryService = workerQueryService;
+        this.objectStorageService = objectStorageService;
     }
 
     /**
@@ -133,6 +147,74 @@ public class WorkersController {
         var deleteWorkerCommand = new DeleteWorkerCommand(workerId);
         workerCommandService.handle(deleteWorkerCommand);
         return ResponseEntity.ok("Worker with given id successfully deleted");
+    }
+
+    @Operation(
+            summary = "Upload worker photo image",
+            description = "Upload a photo image for a worker. Accepts JPEG, PNG, WEBP, GIF up to 5MB"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Photo uploaded successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid file or request"),
+            @ApiResponse(responseCode = "404", description = "Worker not found"),
+            @ApiResponse(responseCode = "500", description = "Error uploading image")
+    })
+    @PostMapping(value = "/{workerId}/photo-image", consumes = "multipart/form-data")
+    public ResponseEntity<?> uploadPhotoImage(
+            @PathVariable Long workerId,
+            @RequestParam("file") MultipartFile file) {
+        try {
+            var workerOpt = workerQueryService.handle(new GetWorkerByIdQuery(workerId));
+            if (workerOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(new MessageResource("Worker not found"));
+            }
+            var worker = workerOpt.get();
+            
+            // Eliminar la imagen anterior si existe
+            String currentPhotoUrl = worker.getPhotoUrl();
+            if (currentPhotoUrl != null && !currentPhotoUrl.isEmpty() 
+                    && !currentPhotoUrl.equals("to Choose")) {
+                try {
+                    objectStorageService.deleteWorkerImage(currentPhotoUrl);
+                } catch (Exception e) {
+                    logger.warn("No se pudo eliminar la imagen anterior (puede que no exista): {}", e.getMessage());
+                }
+            }
+            
+            // Validar y subir la nueva imagen
+            byte[] fileContent = file.getBytes();
+            String contentType = file.getContentType();
+            objectStorageService.validateImageFile(fileContent, contentType, file.getSize());
+
+            String imageUrl = objectStorageService.uploadWorkerPhotoImage(fileContent, contentType, workerId);
+
+            // Actualizar el worker con la nueva URL
+            var updateCommand = new UpdateWorkerCommand(
+                    workerId,
+                    worker.getName(),           // name sin cambios
+                    worker.getSpecialization(), // specialization sin cambios
+                    imageUrl,                   // nueva URL de imagen
+                    worker.getSalonId()         // providerId sin cambios
+            );
+
+            var updated = workerCommandService.handle(updateCommand);
+
+            if (updated.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(new MessageResource("Error updating worker"));
+            }
+
+            return ResponseEntity.ok(WorkerResourceFromEntityAssembler.toResourceFromEntity(updated.get()));
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new MessageResource(e.getMessage()));
+        } catch (Exception e) {
+            logger.error("Error uploading worker photo: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new MessageResource("Error uploading image: " + e.getMessage()));
+        }
     }
 
 }

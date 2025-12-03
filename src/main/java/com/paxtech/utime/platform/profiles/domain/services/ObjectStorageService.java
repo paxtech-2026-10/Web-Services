@@ -12,6 +12,10 @@ public interface ObjectStorageService {
     String uploadProviderCoverImage(byte[] fileContent, String contentType, Long providerId) throws IOException;
     void deleteProviderImage(String fileUrl) throws IOException;
     
+    // Worker methods
+    String uploadWorkerPhotoImage(byte[] fileContent, String contentType, Long workerId) throws IOException;
+    void deleteWorkerImage(String fileUrl) throws IOException;
+    
     // Shared validation
     void validateImageFile(byte[] fileContent, String contentType, long fileSize);
 }
