@@ -71,17 +71,15 @@ public class ServiceController {
 
     /**
      * Retrieves all available services
-     * @return A list of {@link ServiceResource} if found, or 404 Not Found if none exist
+     * @return A list of {@link ServiceResource}; an empty list when none exist (still 200 OK)
      */
     @GetMapping
     @Operation(summary = "Get all Services")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Services found"),
-            @ApiResponse(responseCode = "404", description = "Services not found")
+            @ApiResponse(responseCode = "200", description = "Services returned (may be empty)")
     })
     public ResponseEntity<List<ServiceResource>> getAllServices() {
         var services = serviceQueryService.handle(new GetAllServicesQuery());
-        if (services.isEmpty()) return ResponseEntity.notFound().build();
         var serviceResources = services.stream()
                 .map(ServiceResourceFromEntityAssembler::toResourceFromEntity)
                 .toList();

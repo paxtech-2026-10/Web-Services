@@ -40,19 +40,10 @@ public class ServiceCommandServiceImpl implements ServiceCommandService {
 
     @Override
     public Optional<Service> handle(UpdateServiceCommand command) {
-        if(!serviceRepository.existsById(command.id())){
-            throw new IllegalArgumentException("Service with this id does not exist");
-        }
-        var result = serviceRepository.findById(command.id());
-        if (result.isEmpty()){
-            throw new IllegalArgumentException("Service with this id does not exist");
-        }
-        var serviceToUpdate = result.get();
-        try {
-            var updatedService = serviceRepository.save(serviceToUpdate.updateInformation(command.name(), command.duration(), command.price()));
-            return Optional.of(updatedService);
-        } catch (Exception e){
-            throw new IllegalArgumentException("Error while updating service", e);
-        }
+        var serviceToUpdate = serviceRepository.findById(command.id())
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Service with id " + command.id() + " does not exist"));
+        serviceToUpdate.updateInformation(command.name(), command.duration(), command.price());
+        return Optional.of(serviceRepository.save(serviceToUpdate));
     }
 }
