@@ -46,7 +46,7 @@ class WorkerCommandServiceImplTest {
         validCreateCommand = new CreateWorkerCommand(
                 "Ana",
                 "Estilista",
-                "https://cdn.example/a.jpg",
+                "https://paxtech.examplea.jpg",
                 10L
         );
     }
@@ -104,7 +104,7 @@ class WorkerCommandServiceImplTest {
     void updateWorkerOkTest() {
         // Arrange
         Worker existing = new Worker(validCreateCommand);
-        UpdateWorkerCommand command = new UpdateWorkerCommand(1L, "Nuevo", "Barbero", "https://cdn.example/n.jpg", 10L);
+        UpdateWorkerCommand command = new UpdateWorkerCommand(1L, "Nuevo", "Barbero", "https://paxtech.examplen.jpg", 10L);
         when(workerRepository.findById(1L)).thenReturn(Optional.of(existing));
         when(workerRepository.save(any(Worker.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -121,7 +121,7 @@ class WorkerCommandServiceImplTest {
     @Test
     void updateWorkerNotFoundTest() {
         // Arrange
-        UpdateWorkerCommand command = new UpdateWorkerCommand(99L, "X", "Y", "https://cdn.example/z.jpg", 1L);
+        UpdateWorkerCommand command = new UpdateWorkerCommand(99L, "X", "Y", "https://paxtech.examplez.jpg", 1L);
         when(workerRepository.findById(99L)).thenReturn(Optional.empty());
 
         // Act & Assert

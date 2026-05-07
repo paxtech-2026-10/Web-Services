@@ -33,7 +33,7 @@ class WorkerQueryServiceImplTest {
     void getBySalonIdTest() {
         // Arrange
         ProviderId pid = new ProviderId(3L);
-        Worker w = new Worker(new CreateWorkerCommand("A", "B", "https://cdn.example/x.jpg", 3L));
+        Worker w = new Worker(new CreateWorkerCommand("A", "B", "https://paxtech.examplex.jpg", 3L));
         List<Worker> expected = List.of(w);
         GetWorkersBySalonIdQuery query = new GetWorkersBySalonIdQuery(pid);
         when(workerRepository.findAllByProviderId(pid)).thenReturn(expected);
@@ -49,7 +49,7 @@ class WorkerQueryServiceImplTest {
     @Test
     void getByIdTest() {
         // Arrange
-        Worker w = new Worker(new CreateWorkerCommand("A", "B", "https://cdn.example/x.jpg", 1L));
+        Worker w = new Worker(new CreateWorkerCommand("A", "B", "https://paxtech.examplex.jpg", 1L));
         GetWorkerByIdQuery query = new GetWorkerByIdQuery(7L);
         when(workerRepository.findById(7L)).thenReturn(Optional.of(w));
 
@@ -64,7 +64,7 @@ class WorkerQueryServiceImplTest {
     @Test
     void getAllWorkersTest() {
         // Arrange
-        Worker w = new Worker(new CreateWorkerCommand("A", "B", "https://cdn.example/x.jpg", 1L));
+        Worker w = new Worker(new CreateWorkerCommand("A", "B", "https://paxtech.examplex.jpg", 1L));
         List<Worker> expected = List.of(w);
         GetAllWorkersQuery query = new GetAllWorkersQuery();
         when(workerRepository.findAll()).thenReturn(expected);

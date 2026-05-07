@@ -18,7 +18,7 @@ class WorkerTest {
         Worker worker = new Worker(
                 new WorkerName("Ana"),
                 new WorkerSpecialization("Estilista"),
-                new WorkerPhotoUrl("https://cdn.example/a.jpg"),
+                new WorkerPhotoUrl("https://paxtech.examplea.jpg"),
                 new ProviderId(42L)
         );
 
@@ -31,7 +31,7 @@ class WorkerTest {
         // Assert
         assertThat(name).isEqualTo("Ana");
         assertThat(specialization).isEqualTo("Estilista");
-        assertThat(photoUrl).isEqualTo("https://cdn.example/a.jpg");
+        assertThat(photoUrl).isEqualTo("https://paxtech.examplea.jpg");
         assertThat(salonId).isEqualTo(42L);
     }
 
@@ -41,7 +41,7 @@ class WorkerTest {
         CreateWorkerCommand command = new CreateWorkerCommand(
                 "Luis",
                 "Barbero",
-                "https://cdn.example/l.png",
+                "https://paxtech.examplel.png",
                 99L
         );
 
@@ -51,7 +51,7 @@ class WorkerTest {
         // Assert
         assertThat(worker.getName()).isEqualTo("Luis");
         assertThat(worker.getSpecialization()).isEqualTo("Barbero");
-        assertThat(worker.getPhotoUrl()).isEqualTo("https://cdn.example/l.png");
+        assertThat(worker.getPhotoUrl()).isEqualTo("https://paxtech.examplel.png");
         assertThat(worker.getSalonId()).isEqualTo(99L);
     }
 
@@ -61,7 +61,7 @@ class WorkerTest {
         Worker worker = new Worker(
                 new WorkerName("Ana"),
                 new WorkerSpecialization("Estilista"),
-                new WorkerPhotoUrl("https://cdn.example/old.jpg"),
+                new WorkerPhotoUrl("https://paxtech.exampleold.jpg"),
                 new ProviderId(1L)
         );
 
@@ -69,7 +69,7 @@ class WorkerTest {
         Worker returned = worker.updateInformation(
                 "Nuevo",
                 "Barbero",
-                "https://cdn.example/new.jpg",
+                "https://paxtech.examplenew.jpg",
                 7L
         );
 
@@ -77,7 +77,7 @@ class WorkerTest {
         assertThat(returned).isSameAs(worker);
         assertThat(worker.getName()).isEqualTo("Nuevo");
         assertThat(worker.getSpecialization()).isEqualTo("Barbero");
-        assertThat(worker.getPhotoUrl()).isEqualTo("https://cdn.example/new.jpg");
+        assertThat(worker.getPhotoUrl()).isEqualTo("https://paxtech.examplenew.jpg");
         assertThat(worker.getSalonId()).isEqualTo(7L);
     }
 
@@ -87,7 +87,7 @@ class WorkerTest {
         CreateWorkerCommand bad = new CreateWorkerCommand(
                 "",
                 "Rol",
-                "https://cdn.example/x.jpg",
+                "https://paxtech.examplex.jpg",
                 1L
         );
 
