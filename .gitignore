@@ -39,3 +39,6 @@ build/
 *.env
 
 .claude
+
+### Setup guides (notas locales) ###
+PLAYWRIGHT_SETUP_GUIDE.md
