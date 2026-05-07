@@ -9,10 +9,8 @@ import com.paxtech.utime.platform.workers.domain.model.valueobjects.ProviderId;
 import com.paxtech.utime.platform.workers.domain.model.valueobjects.WorkerName;
 import com.paxtech.utime.platform.workers.domain.services.WorkerCommandService;
 import com.paxtech.utime.platform.workers.infrastructure.persistence.jpa.repositories.WorkerRepository;
-import org.hibernate.jdbc.Work;
 import org.springframework.stereotype.Service;
 
-import javax.swing.text.html.Option;
 import java.util.Optional;
 
 @Service
