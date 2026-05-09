@@ -120,4 +120,20 @@ class ReviewCommandServiceImplTest {
 
         verify(reviewRepository, never()).deleteById(any());
     }
+
+    // Verifica que no se puede crear un CreateReviewCommand con rating inválido
+    @Test
+    void createReview_invalidRatingTest() {
+        assertThatThrownBy(() ->
+                new CreateReviewCommand(
+                        1L,
+                        10L,
+                        0,
+                        "Bad service",
+                        false
+                )
+        )
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Rating must be between 1 and 5");
+    }
 }
