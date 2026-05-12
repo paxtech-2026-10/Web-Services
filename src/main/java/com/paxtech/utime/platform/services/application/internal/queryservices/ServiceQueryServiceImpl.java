@@ -1,6 +1,5 @@
 package com.paxtech.utime.platform.services.application.internal.queryservices;
 
-import com.paxtech.utime.platform.profiles.interfaces.acl.ProviderContextFacade;
 import com.paxtech.utime.platform.services.domain.exception.SalonNotFoundException;
 import com.paxtech.utime.platform.services.domain.model.aggregates.Service;
 import com.paxtech.utime.platform.services.domain.model.queries.GetAllServicesQuery;
@@ -14,12 +13,8 @@ import java.util.Optional;
 @org.springframework.stereotype.Service
 public class ServiceQueryServiceImpl implements ServiceQueryService {
     private final ServiceRepository serviceRepository;
-    private final ProviderContextFacade providerContextFacade;
-
-    public ServiceQueryServiceImpl(ServiceRepository serviceRepository,
-                                   ProviderContextFacade providerContextFacade) {
+    public ServiceQueryServiceImpl(ServiceRepository serviceRepository) {
         this.serviceRepository = serviceRepository;
-        this.providerContextFacade = providerContextFacade;
     }
     @Override
     public List<Service> handle(GetAllServicesQuery query){
@@ -28,9 +23,8 @@ public class ServiceQueryServiceImpl implements ServiceQueryService {
 
     @Override
     public List<Service> handle(GetServicesBySalonIdQuery query){
-        Long providerId = query.providerId().providerId();
-        if (providerContextFacade.fetchProviderById(providerId).isEmpty()) {
-            throw new SalonNotFoundException(providerId);
+        if(!serviceRepository.existsById(query.providerId().providerId())){
+            throw new SalonNotFoundException(query.providerId().providerId());
         }
         return serviceRepository.findByProviderId(query.providerId());
     }
