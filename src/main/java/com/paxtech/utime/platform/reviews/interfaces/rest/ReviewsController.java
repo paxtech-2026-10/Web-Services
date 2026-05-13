@@ -89,11 +89,9 @@ public class ReviewsController {
     @GetMapping
     @Operation(summary = "Get all reviews", description = "Get all reviews")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Reviews found"),
-            @ApiResponse(responseCode = "404", description = "Reviews not found")})
+            @ApiResponse(responseCode = "200", description = "Reviews found")})
     public ResponseEntity<List<ReviewResource>> getAllReviews() {
         var reviews = reviewQueryService.handle(new GetAllReviewsQuery());
-        if (reviews.isEmpty()) return ResponseEntity.notFound().build();
         var reviewResources = reviews.stream()
                 .map(ReviewResourceFromEntityAssembler::toResourceFromEntity)
                 .toList();
