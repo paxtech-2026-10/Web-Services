@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.context.annotation.Profile;
 
 /**
  * Implementación de Supabase Storage usando la API REST nativa.
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
  * que usar la API S3 compatible con AWS Signature V4.
  */
 @Service
+@Profile("!test")
 public class SupabaseStorageServiceImpl extends S3CompatibleStorageService {
     
     private static final Logger logger = LoggerFactory.getLogger(SupabaseStorageServiceImpl.class);

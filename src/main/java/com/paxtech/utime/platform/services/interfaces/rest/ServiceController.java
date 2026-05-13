@@ -76,7 +76,7 @@ public class ServiceController {
     @GetMapping
     @Operation(summary = "Get all Services")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Services returned (may be empty)")
+            @ApiResponse(responseCode = "200", description = "Services found")
     })
     public ResponseEntity<List<ServiceResource>> getAllServices() {
         var services = serviceQueryService.handle(new GetAllServicesQuery());

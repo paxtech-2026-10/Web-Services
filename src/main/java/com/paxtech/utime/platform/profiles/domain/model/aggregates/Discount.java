@@ -19,7 +19,8 @@ public class Discount extends AuditableAbstractAggregateRoot<Discount> {
     @Column(name = "subtitle", length = 300)
     private String subtitle;
 
-    @Column(name = "content", nullable = false, columnDefinition = "TEXT")
+    @Lob
+    @Column(name = "content", nullable = false)
     private String content;
 
     @Enumerated(EnumType.STRING)
@@ -113,4 +114,3 @@ public class Discount extends AuditableAbstractAggregateRoot<Discount> {
         return originalPrice.subtract(discountAmount).max(BigDecimal.ZERO);
     }
 }
-
