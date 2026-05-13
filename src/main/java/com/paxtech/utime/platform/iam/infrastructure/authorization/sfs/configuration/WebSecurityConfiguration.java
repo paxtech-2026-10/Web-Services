@@ -113,8 +113,7 @@ public class WebSecurityConfiguration {
                                 "/api/v1/clients/**",
                                 "/api/v1/users/**",
                                 "/api/v1/services/**",
-                                "/api/v1/provider-profiles",
-                                "/api/v1/provider-profiles/**",
+                                "api/v1/provider-profiles/**",
                                 "/api/v1/reservationsDetails/details/**",
                                 "/api/v1/reservationsDetails/**",
                                 "/api/v1/payments/webhook"
