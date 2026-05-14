@@ -1,21 +1,37 @@
 # Variables de Entorno para Despliegue
 
-## Variables de Base de Datos
-- `DATABASE_URL`: URL completa de conexión a PostgreSQL (ej: jdbc:postgresql://host:port/database)
-- `DATABASE_USERNAME`: Usuario de la base de datos
-- `DATABASE_PASSWORD`: Contraseña de la base de datos
+## Azure App Settings requeridas
 
-## Variables de JWT
-- `JWT_SECRET`: Clave secreta para firmar tokens JWT (debe ser segura)
-- `JWT_EXPIRATION_DAYS`: Días de expiración de los tokens (por defecto: 7)
+- `DATASOURCE_URL`: URL completa de conexion JDBC a PostgreSQL.
+- `JWT_SECRET`: Clave secreta segura para firmar tokens JWT.
+- `SUPABASE_URL`: URL del proyecto Supabase.
+- `SUPABASE_BUCKET`: Bucket usado para archivos de perfiles.
+- `SUPABASE_SERVICE_ROLE_KEY`: Service role key de Supabase.
+- `STRIPE_SECRET_KEY`: Secret key de Stripe.
+- `STRIPE_WEBHOOK_SECRET`: Webhook signing secret de Stripe.
 
-## Variables de Aplicación
-- `SPRING_PROFILES_ACTIVE`: Perfil de Spring a usar (prod para producción)
-- `JAVA_OPTS`: Opciones de JVM (ej: -Xmx512m -Xms256m)
-- `PORT`: Puerto donde correrá la aplicación (por defecto: 8080)
+## Azure App Settings opcionales
 
-## Configuración en Render
-1. Ve a tu servicio en Render
-2. Ve a la sección "Environment"
-3. Agrega cada variable con su valor correspondiente
-4. Reinicia el servicio
+- `PORT`: Puerto donde corre la aplicacion. Por defecto: `8080`.
+- `JWT_EXPIRATION_DAYS`: Dias de expiracion de los tokens. Por defecto: `7`.
+- `JPA_SHOW_SQL`: Muestra SQL en logs. Por defecto: `false`.
+- `JPA_DDL_AUTO`: Estrategia de Hibernate DDL. Por defecto: `update`.
+- `FLYWAY_ENABLED`: Habilita Flyway. Por defecto: `false`.
+- `LOGGING_FILE_NAME`: Ruta del archivo de logs. Por defecto: `/home/LogFiles/Application/app.log`.
+- `LOGGING_LEVEL_ROOT`: Nivel raiz de logs. Por defecto: `INFO`.
+
+## Configuracion local
+
+Los valores locales estan en `application-local.properties`, que esta ignorado por Git y no se empaqueta dentro del JAR.
+
+Para correr localmente con ese archivo en PowerShell:
+
+```powershell
+$env:SPRING_PROFILES_ACTIVE='local'; mvn spring-boot:run
+```
+
+En bash:
+
+```bash
+SPRING_PROFILES_ACTIVE=local mvn spring-boot:run
+```

@@ -37,3 +37,7 @@ build/
 .env.local
 .env.*.local
 *.env
+application-local.properties
+src/main/resources/application-local.properties
+.claude/
+PLAYWRIGHT_SETUP_GUIDE.md
