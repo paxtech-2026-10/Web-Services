@@ -296,7 +296,6 @@ public class ProviderProfileController {
 
         // 1. Traer todos los profiles
         var profiles = providerProfileQueryService.handle(new GetAllProviderProfilesQuery());
-        if (profiles.isEmpty()) return ResponseEntity.notFound().build();
 
         // 2. Convertir cada uno a ProfileResource
         List<ProfileResource> resources = profiles.stream().map(profile -> {

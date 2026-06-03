@@ -99,7 +99,6 @@ public class PaymentController {
     })
     public ResponseEntity<List<PaymentResource>> getAllPayments() {
         var payments = paymentQueryService.handle(new GetAllPaymentsQuery());
-        if (payments.isEmpty()) return ResponseEntity.notFound().build();
         var resources = payments.stream()
                 .map(PaymentResourceFromEntityAssembler::toResourceFromEntity)
                 .toList();

@@ -150,7 +150,6 @@ public class ProvidersController {
      */
     private ResponseEntity<List<ProviderResource>> getAllProviders() {
         List<Provider> providers = providerQueryService.handle(new GetAllProvidersQuery());
-        if (providers.isEmpty()) return ResponseEntity.notFound().build();
         var resources = providers.stream()
                 .map(ProviderResourceFromEntityAssembler::toResourceFromEntity)
                 .toList();

@@ -92,7 +92,6 @@ public class TimeSlotController {
     public ResponseEntity<Iterable<TimeSlotResource>> getAllTimeSlots() {
         var timeSlots = timeSlotQueryService.handle(
                 new com.paxtech.utime.platform.reservations.domain.model.queries.GetAllTimeSlotsQuery());
-        if (timeSlots.isEmpty()) return ResponseEntity.notFound().build();
         var resources = timeSlots.stream()
                 .map(TimeSlotResourceFromEntityAssembler::toResourceFromEntity)
                 .toList();

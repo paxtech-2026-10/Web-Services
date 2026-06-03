@@ -105,7 +105,6 @@ public class ReservationController {
     public ResponseEntity<List<ReservationResource>> getAllReservations() {
         var query = new GetAllReservationsQuery();
         var reservations = reservationQueryService.handle(query);
-        if (reservations.isEmpty()) return ResponseEntity.notFound().build();
         var resources = reservations.stream()
                 .map(ReservationResourceFromEntityAssembler::toResourceFromEntity)
                 .toList();
@@ -153,7 +152,6 @@ public class ReservationController {
 
         /* 1. Traer todas las reservas */
         var reservations = reservationQueryService.handle(new GetAllReservationsQuery());
-        if (reservations.isEmpty()) return ResponseEntity.notFound().build();
 
         /* 2. Transformar cada una a ReservationDetailsResource */
         var resources = reservations.stream()
