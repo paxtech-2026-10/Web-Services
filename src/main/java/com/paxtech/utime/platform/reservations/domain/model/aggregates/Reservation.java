@@ -1,6 +1,7 @@
 package com.paxtech.utime.platform.reservations.domain.model.aggregates;
 
 import com.paxtech.utime.platform.reservations.domain.model.commands.CreateReservationCommand;
+import com.paxtech.utime.platform.reservations.domain.model.events.ReservationCreatedEvent;
 import com.paxtech.utime.platform.shared.domain.model.aggregates.AuditableAbstractAggregateRoot;
 import jakarta.persistence.*;
 
@@ -31,6 +32,7 @@ public class Reservation extends AuditableAbstractAggregateRoot<Reservation> {
         this.serviceId = command.serviceId();
         this.timeSlotId = command.timeSlotId();
         this.workerId= command.workerId();
+        this.addDomainEvent(new ReservationCreatedEvent(this.timeSlotId));
     }
 
     public Long getClientId() { return clientId; }
