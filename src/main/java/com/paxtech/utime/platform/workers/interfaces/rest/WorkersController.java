@@ -111,7 +111,6 @@ public class WorkersController {
     })
     public ResponseEntity<List<WorkerResource>> getAllWorkers() {
         var workers = workerQueryService.handle(new GetAllWorkersQuery());
-        if (workers.isEmpty()) return ResponseEntity.notFound().build();
         var resources = workers.stream()
                 .map(WorkerResourceFromEntityAssembler::toResourceFromEntity)
                 .toList();

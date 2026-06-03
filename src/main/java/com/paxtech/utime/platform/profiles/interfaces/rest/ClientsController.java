@@ -142,7 +142,6 @@ public class ClientsController {
      */
     private ResponseEntity<List<ClientResource>> getAllClients() {
         List<Client> clients = clientsQueryService.handle(new GetAllClientsQuery());
-        if (clients.isEmpty()) return ResponseEntity.notFound().build();
         var resources = clients.stream()
                 .map(ClientResourceFrontEntityAssembler::toResourceFromEntity)
                 .toList();

@@ -6,6 +6,7 @@ import com.paxtech.utime.platform.reservations.domain.model.commands.DeleteReser
 import com.paxtech.utime.platform.reservations.domain.services.ReservationCommandService;
 import com.paxtech.utime.platform.reservations.infrastructure.persistence.jpa.repositories.ReservationRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
@@ -19,6 +20,7 @@ public class ReservationCommandServiceImpl implements ReservationCommandService 
     }
 
     @Override
+    @Transactional
     public Optional<Reservation> handle(CreateReservationCommand command) {
         if (command.clientId() == null || command.clientId() <= 0 ||
                 command.providerId() == null || command.providerId() <= 0 ||
