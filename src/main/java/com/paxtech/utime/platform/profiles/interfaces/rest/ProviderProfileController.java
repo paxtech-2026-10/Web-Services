@@ -653,7 +653,8 @@ public class ProviderProfileController {
                     id,
                     imageUrl,
                     profile.getCoverImageUrl(),
-                    profile.getLocation(),
+                    // Subir imagen no debe exigir location: si está vacío se envía null (sin cambios)
+                    (profile.getLocation() == null || profile.getLocation().isBlank()) ? null : profile.getLocation(),
                     null,  // companyName sin cambios
                     null,  // socials sin cambios
                     null,  // portfolioImages sin cambios
@@ -720,7 +721,8 @@ public class ProviderProfileController {
                     id,
                     profile.getProfileImageUrl(),
                     imageUrl,
-                    profile.getLocation(),
+                    // Subir imagen no debe exigir location: si está vacío se envía null (sin cambios)
+                    (profile.getLocation() == null || profile.getLocation().isBlank()) ? null : profile.getLocation(),
                     null,  // companyName sin cambios
                     null,  // socials sin cambios
                     null,  // portfolioImages sin cambios
