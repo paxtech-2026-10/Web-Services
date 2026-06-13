@@ -1,5 +1,6 @@
 package com.paxtech.utime.platform.reservations.interfaces.rest;
 
+import com.paxtech.utime.platform.profiles.interfaces.acl.ClientContextFacade;
 import com.paxtech.utime.platform.profiles.interfaces.acl.ProviderContextFacade;
 import com.paxtech.utime.platform.reservations.domain.model.commands.DeleteReservationCommand;
 import com.paxtech.utime.platform.reservations.domain.model.queries.GetAllReservationsQuery;
@@ -41,6 +42,7 @@ public class ReservationController {
     private final TimeSlotQueryService timeSlotQueryService;
     private final WorkerContextFacade workerContextFacade;
     private final ServiceQueryService serviceQueryService;
+    private final ClientContextFacade clientContextFacade;
 
     /**
      * Constructor
@@ -48,13 +50,14 @@ public class ReservationController {
      * @param reservationQueryService The {@link ReservationQueryService} instance
      */
     public ReservationController(ReservationCommandService reservationCommandService,
-                                 ReservationQueryService reservationQueryService, ProviderContextFacade providerContextFacade, TimeSlotQueryService timeSlotQueryService, WorkerContextFacade workerContextFacade, ServiceQueryService serviceQueryService) {
+                                 ReservationQueryService reservationQueryService, ProviderContextFacade providerContextFacade, TimeSlotQueryService timeSlotQueryService, WorkerContextFacade workerContextFacade, ServiceQueryService serviceQueryService, ClientContextFacade clientContextFacade) {
         this.reservationCommandService = reservationCommandService;
         this.reservationQueryService = reservationQueryService;
         this.providerContextFacade = providerContextFacade;
         this.timeSlotQueryService = timeSlotQueryService;
         this.workerContextFacade = workerContextFacade;
         this.serviceQueryService = serviceQueryService;
+        this.clientContextFacade = clientContextFacade;
     }
 
     /**
@@ -129,7 +132,8 @@ public class ReservationController {
                 providerContextFacade,
                 timeSlotQueryService,
                 workerContextFacade,
-                serviceQueryService
+                serviceQueryService,
+                clientContextFacade
         );
 
         return ResponseEntity.ok(detailsResource);
@@ -160,7 +164,8 @@ public class ReservationController {
                         providerContextFacade,
                         timeSlotQueryService,
                         workerContextFacade,
-                        serviceQueryService
+                        serviceQueryService,
+                        clientContextFacade
                 ))
                 .toList();
 
