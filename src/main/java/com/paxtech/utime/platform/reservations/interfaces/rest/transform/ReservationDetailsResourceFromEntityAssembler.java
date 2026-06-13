@@ -1,11 +1,13 @@
 package com.paxtech.utime.platform.reservations.interfaces.rest.transform;
 
+import com.paxtech.utime.platform.profiles.interfaces.acl.ClientContextFacade;
 import com.paxtech.utime.platform.profiles.interfaces.acl.ProviderContextFacade;
 import com.paxtech.utime.platform.reservations.domain.model.aggregates.Reservation;
 
 import com.paxtech.utime.platform.reservations.domain.model.queries.GetTimeSlotByIdQuery;
 
 import com.paxtech.utime.platform.reservations.domain.services.TimeSlotQueryService;
+import com.paxtech.utime.platform.reservations.interfaces.rest.acl.ClientDto;
 import com.paxtech.utime.platform.reservations.interfaces.rest.acl.ProviderDto;
 import com.paxtech.utime.platform.reservations.interfaces.rest.acl.WorkerDto;
 import com.paxtech.utime.platform.reservations.interfaces.rest.resources.ReservationDetailsResource;
@@ -16,7 +18,7 @@ import com.paxtech.utime.platform.workers.interfaces.rest.acl.WorkerContextFacad
 
 public class ReservationDetailsResourceFromEntityAssembler {
 
-    public static ReservationDetailsResource toResourceFromEntity(Reservation reservation, ProviderContextFacade providerContextFacade, TimeSlotQueryService timeSlotQueryService, WorkerContextFacade workerContextFacade, ServiceQueryService serviceQueryService) {
+    public static ReservationDetailsResource toResourceFromEntity(Reservation reservation, ProviderContextFacade providerContextFacade, TimeSlotQueryService timeSlotQueryService, WorkerContextFacade workerContextFacade, ServiceQueryService serviceQueryService, ClientContextFacade clientContextFacade) {
 
         var provider = providerContextFacade.fetchProviderById(reservation.getProviderId())
                 .orElseThrow(() -> new IllegalArgumentException("Provider not found"));
@@ -25,6 +27,11 @@ public class ReservationDetailsResourceFromEntityAssembler {
                 provider.getUser().getEmail(),
                 provider.getCompanyName()
         );
+
+        // Resolver el nombre del cliente para hablar el lenguaje del usuario (no exponer el ID crudo)
+        var clientDto = clientContextFacade.fetchClientById(reservation.getClientId())
+                .map(client -> new ClientDto(client.getId(), client.getFullName()))
+                .orElseGet(() -> ClientDto.unknown(reservation.getClientId()));
 
         // Manejar el caso cuando el Worker ha sido eliminado
         WorkerDto workerDto;
@@ -61,6 +68,7 @@ public class ReservationDetailsResourceFromEntityAssembler {
         return new ReservationDetailsResource(
                 reservation.getId(),
                 reservation.getClientId(),
+                clientDto,
                 providerDto,
                 serviceResource,
                 timeSLotResource,
