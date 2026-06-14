@@ -37,9 +37,10 @@ class ReservationCreatedEventHandlerIntegrationTest {
     @Test
     @DisplayName("Creating a reservation marks the reserved time slot unavailable")
     void createReservation_marksTimeSlotUnavailable() {
+        var slotStart = LocalDateTime.now().plusDays(1).withHour(10).withMinute(0).withSecond(0).withNano(0);
         var availableTimeSlot = timeSlotRepository.save(new TimeSlot(new CreateTimeSlotCommand(
-                LocalDateTime.of(2026, 6, 3, 10, 0),
-                LocalDateTime.of(2026, 6, 3, 10, 30),
+                slotStart,
+                slotStart.plusMinutes(30),
                 true,
                 "REGULAR"
         )));
