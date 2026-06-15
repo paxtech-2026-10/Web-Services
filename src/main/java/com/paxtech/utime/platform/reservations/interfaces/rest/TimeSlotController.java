@@ -7,6 +7,7 @@ import com.paxtech.utime.platform.reservations.interfaces.rest.resources.CreateT
 import com.paxtech.utime.platform.reservations.interfaces.rest.resources.TimeSlotResource;
 import com.paxtech.utime.platform.reservations.interfaces.rest.transform.CreateTimeSlotCommandFromResourceAssembler;
 import com.paxtech.utime.platform.reservations.interfaces.rest.transform.TimeSlotResourceFromEntityAssembler;
+import com.paxtech.utime.platform.shared.interfaces.rest.resources.MessageResource;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -51,13 +52,17 @@ public class TimeSlotController {
             @ApiResponse(responseCode = "201", description = "TimeSlot created"),
             @ApiResponse(responseCode = "400", description = "Bad request")
     })
-    public ResponseEntity<TimeSlotResource> createTimeSlot(@RequestBody CreateTimeSlotResource resource) {
-        var createTimeSlotCommand = CreateTimeSlotCommandFromResourceAssembler.toCommandFromResource(resource);
-        var timeSlot = timeSlotCommandService.handle(createTimeSlotCommand);
-        if (timeSlot.isEmpty()) return ResponseEntity.badRequest().build();
-        var createdTimeSlot = timeSlot.get();
-        var timeSlotResource = TimeSlotResourceFromEntityAssembler.toResourceFromEntity(createdTimeSlot);
-        return new ResponseEntity<>(timeSlotResource, HttpStatus.CREATED);
+    public ResponseEntity<?> createTimeSlot(@RequestBody CreateTimeSlotResource resource) {
+        try {
+            var createTimeSlotCommand = CreateTimeSlotCommandFromResourceAssembler.toCommandFromResource(resource);
+            var timeSlot = timeSlotCommandService.handle(createTimeSlotCommand);
+            if (timeSlot.isEmpty()) return ResponseEntity.badRequest().build();
+            var createdTimeSlot = timeSlot.get();
+            var timeSlotResource = TimeSlotResourceFromEntityAssembler.toResourceFromEntity(createdTimeSlot);
+            return new ResponseEntity<>(timeSlotResource, HttpStatus.CREATED);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(new MessageResource(e.getMessage()));
+        }
     }
 
     /**
