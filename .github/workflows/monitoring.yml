@@ -1,0 +1,91 @@
+# =============================================================================
+# 7.4 Continuous Monitoring - Backend uTime (Web-Services)
+#
+# Implementacion REAL del capitulo 7.4 sobre GitHub Actions (sustituto simple,
+# gratuito y demostrable de Jenkins). Cubre:
+#
+#   7.4.2 Monitoring Pipeline Component  -> health-check programado (cron) que
+#         sondea la URL publica del backend desplegado en Azure App Service.
+#   7.4.3 Alerting Pipeline Component     -> el job 'alert' se dispara solo si el
+#         health-check detecta que el backend no responde ("algo esta mal").
+#   7.4.4 Notification Pipeline Component -> envia un correo via Gmail SMTP al
+#         equipo cuando se dispara la alerta.
+#
+# Secrets/Variables que el repo debe tener configurados
+# (Settings -> Secrets and variables -> Actions):
+#   - Variable BACKEND_URL : URL publica del backend (ej. https://paxtech.azurewebsites.net)
+#   - Secret  MAIL_USERNAME: cuenta Gmail que envia (ej. gaelrszk@gmail.com)
+#   - Secret  MAIL_PASSWORD: App Password de 16 caracteres de esa cuenta Gmail
+#   - Secret  MAIL_TO      : destinatario(s), separados por coma
+# =============================================================================
+name: Continuous Monitoring - Backend Health
+
+on:
+  schedule:
+    # Cada 15 minutos. GitHub puede retrasar runs programados en periodos de carga.
+    - cron: "*/15 * * * *"
+  workflow_dispatch: {} # permite ejecutarlo manualmente desde la pestana Actions
+
+permissions:
+  contents: read
+
+jobs:
+  # 7.4.2 Monitoring: sondea la salud del backend en produccion.
+  health-check:
+    name: Health check (monitoring)
+    runs-on: ubuntu-latest
+    outputs:
+      http_code: ${{ steps.probe.outputs.http_code }}
+    steps:
+      - name: Probe backend endpoint
+        id: probe
+        run: |
+          BASE="${{ vars.BACKEND_URL }}"
+          if [ -z "$BASE" ]; then
+            echo "::error::La variable BACKEND_URL no esta configurada en el repo."
+            exit 1
+          fi
+          # Liveness: que el servidor RESPONDA es senal de que esta arriba.
+          # Un 401/403/404 significa servidor vivo (solo deniega/no encuentra el path).
+          # Solo se considera CAIDO si hay timeout/sin conexion (000) o error 5xx.
+          URL="${BASE%/}/"
+          echo "Sondeando: $URL"
+          CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "$URL" || echo "000")
+          echo "http_code=$CODE" >> "$GITHUB_OUTPUT"
+          echo "Codigo HTTP recibido: $CODE"
+          if [ "$CODE" != "000" ] && [ "$CODE" -lt 500 ]; then
+            echo "Backend ARRIBA (responde con HTTP $CODE)"
+          else
+            echo "::error::Backend NO responde (HTTP $CODE)"
+            exit 1
+          fi
+
+  # 7.4.3 Alerting + 7.4.4 Notification: solo corre si el health-check fallo.
+  alert:
+    name: Alert and notify (down)
+    runs-on: ubuntu-latest
+    needs: health-check
+    if: failure()
+    steps:
+      - name: Send DOWN alert email (Gmail)
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          from: uTime Monitoring <${{ secrets.MAIL_USERNAME }}>
+          to: ${{ secrets.MAIL_TO }}
+          subject: "[ALERTA - CRITICA] El backend uTime no responde"
+          body: |
+            El monitoreo continuo detecto que el backend uTime no responde correctamente.
+
+            Codigo HTTP recibido: ${{ needs.health-check.outputs.http_code }}
+            URL monitoreada:      ${{ vars.BACKEND_URL }}
+            Severidad:            CRITICA (afecta a las apps cliente)
+            Hora (UTC):           run ${{ github.run_id }}
+            Ver detalle:          ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+            Accion recomendada: revisar el Log Stream / metricas del App Service 'paxtech'
+            en el portal de Azure e investigar la causa.
