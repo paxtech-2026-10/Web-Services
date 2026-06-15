@@ -50,7 +50,10 @@ jobs:
           # Solo se considera CAIDO si hay timeout/sin conexion (000) o error 5xx.
           URL="${BASE%/}/"
           echo "Sondeando: $URL"
-          CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "$URL" || echo "000")
+          # Si curl no puede conectar (DNS/timeout), devuelve "000" y exit != 0.
+          # Captura el codigo sin duplicarlo (el || va FUERA de la sustitucion).
+          CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "$URL") || CODE="000"
+          [ -z "$CODE" ] && CODE="000"
           echo "http_code=$CODE" >> "$GITHUB_OUTPUT"
           echo "Codigo HTTP recibido: $CODE"
           if [ "$CODE" != "000" ] && [ "$CODE" -lt 500 ]; then
