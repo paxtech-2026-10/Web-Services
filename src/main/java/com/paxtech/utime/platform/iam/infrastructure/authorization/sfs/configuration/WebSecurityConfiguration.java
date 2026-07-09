@@ -116,7 +116,8 @@ public class WebSecurityConfiguration {
                                 "api/v1/provider-profiles/**",
                                 "/api/v1/reservationsDetails/details/**",
                                 "/api/v1/reservationsDetails/**",
-                                "/api/v1/payments/webhook"
+                                "/api/v1/payments/webhook",
+                                "/api/v1/analytics/**"
                         ).permitAll()
                         .requestMatchers("/api/v1/reviews/**").authenticated()
                         .requestMatchers("/api/v1/payments/**").authenticated()

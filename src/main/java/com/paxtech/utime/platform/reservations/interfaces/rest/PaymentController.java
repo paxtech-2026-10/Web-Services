@@ -19,6 +19,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -37,16 +38,19 @@ public class PaymentController {
     private final PaymentQueryService paymentQueryService;
     private final StripePaymentService stripePaymentService;
     private final PaymentRepository paymentRepository;
+    private final boolean paymentsSimulationEnabled;
 
     public PaymentController(
             PaymentCommandService paymentCommandService,
             PaymentQueryService paymentQueryService,
             StripePaymentService stripePaymentService,
-            PaymentRepository paymentRepository) {
+            PaymentRepository paymentRepository,
+            @Value("${payments.simulation.enabled:false}") boolean paymentsSimulationEnabled) {
         this.paymentCommandService = paymentCommandService;
         this.paymentQueryService = paymentQueryService;
         this.stripePaymentService = stripePaymentService;
         this.paymentRepository = paymentRepository;
+        this.paymentsSimulationEnabled = paymentsSimulationEnabled;
     }
 
     /**
@@ -149,6 +153,47 @@ public class PaymentController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new MessageResource("Error creating payment link: " + e.getMessage()));
         }
+    }
+
+    /**
+     * Simulate a successful payment without waiting for the Stripe webhook.
+     * <p>
+     * This endpoint only works when the {@code PAYMENTS_SIMULATION_ENABLED}
+     * environment variable is set to {@code true}. It marks the payment as
+     * SUCCEEDED directly, reproducing the effect of the real Stripe webhook,
+     * and is intended only for test/demo environments where the webhook is
+     * not reachable.
+     *
+     * @param paymentId The ID of the payment to confirm
+     * @return The updated {@link PaymentResource}, 403 if simulation is disabled,
+     *         or 404 if the payment does not exist
+     */
+    @PostMapping("/{paymentId}/confirm")
+    @Operation(summary = "Simulate a successful payment (test/demo only)",
+            description = "Marks a payment as SUCCEEDED without the Stripe webhook. " +
+                    "Guarded by the PAYMENTS_SIMULATION_ENABLED environment variable.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Payment confirmed"),
+            @ApiResponse(responseCode = "403", description = "Payment simulation is disabled"),
+            @ApiResponse(responseCode = "404", description = "Payment not found")
+    })
+    public ResponseEntity<?> confirmPaymentSimulation(@PathVariable Long paymentId) {
+        if (!paymentsSimulationEnabled) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(new MessageResource("Payment simulation is disabled"));
+        }
+
+        var paymentOpt = paymentRepository.findById(paymentId);
+        if (paymentOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new MessageResource("Payment not found"));
+        }
+
+        var payment = paymentOpt.get();
+        payment.markAsSucceeded();
+        paymentRepository.save(payment);
+
+        return ResponseEntity.ok(PaymentResourceFromEntityAssembler.toResourceFromEntity(payment));
     }
 
     /**
