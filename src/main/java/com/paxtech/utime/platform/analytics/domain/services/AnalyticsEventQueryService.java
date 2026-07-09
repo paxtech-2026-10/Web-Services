@@ -1,7 +1,7 @@
 package com.paxtech.utime.platform.analytics.domain.services;
 
 import com.paxtech.utime.platform.analytics.domain.model.aggregates.AnalyticsEvent;
-import com.paxtech.utime.platform.analytics.domain.model.queries.EventTypeCount;
+import com.paxtech.utime.platform.analytics.domain.model.queries.AnalyticsSummary;
 import com.paxtech.utime.platform.analytics.domain.model.queries.GetAllAnalyticsEventsQuery;
 import com.paxtech.utime.platform.analytics.domain.model.queries.GetAnalyticsEventByIdQuery;
 import com.paxtech.utime.platform.analytics.domain.model.queries.GetAnalyticsSummaryQuery;
@@ -17,5 +17,5 @@ public interface AnalyticsEventQueryService {
 
     Optional<AnalyticsEvent> handle(GetAnalyticsEventByIdQuery query);
 
-    List<EventTypeCount> handle(GetAnalyticsSummaryQuery query);
+    AnalyticsSummary handle(GetAnalyticsSummaryQuery query);
 }

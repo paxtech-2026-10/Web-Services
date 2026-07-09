@@ -1,7 +1,8 @@
 package com.paxtech.utime.platform.analytics.infrastructure.persistence.jpa.repositories;
 
 import com.paxtech.utime.platform.analytics.domain.model.aggregates.AnalyticsEvent;
-import com.paxtech.utime.platform.analytics.domain.model.queries.EventTypeCount;
+import com.paxtech.utime.platform.analytics.domain.model.queries.AnalyticsTimeRange;
+import com.paxtech.utime.platform.analytics.domain.model.queries.EventTypeActorCount;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -14,10 +15,24 @@ public interface AnalyticsEventRepository extends JpaRepository<AnalyticsEvent, 
     List<AnalyticsEvent> findAllByOrderByOccurredAtDesc();
 
     /**
-     * Total number of recorded events grouped by event type, newest count first.
+     * Number of events grouped by event type and actor type. The detailed
+     * summary is composed in the query service from these rows.
      */
-    @Query("SELECT new com.paxtech.utime.platform.analytics.domain.model.queries.EventTypeCount(" +
-            "e.eventType, COUNT(e)) " +
-            "FROM AnalyticsEvent e GROUP BY e.eventType ORDER BY COUNT(e) DESC")
-    List<EventTypeCount> countGroupedByEventType();
+    @Query("SELECT new com.paxtech.utime.platform.analytics.domain.model.queries.EventTypeActorCount(" +
+            "e.eventType, e.actorType, COUNT(e)) " +
+            "FROM AnalyticsEvent e GROUP BY e.eventType, e.actorType")
+    List<EventTypeActorCount> countByEventTypeAndActor();
+
+    /**
+     * Number of distinct (non-null) actors that have fired events.
+     */
+    @Query("SELECT COUNT(DISTINCT e.actorId) FROM AnalyticsEvent e WHERE e.actorId IS NOT NULL")
+    long countDistinctActors();
+
+    /**
+     * Earliest and latest event timestamps (both null when there are no events).
+     */
+    @Query("SELECT new com.paxtech.utime.platform.analytics.domain.model.queries.AnalyticsTimeRange(" +
+            "MIN(e.occurredAt), MAX(e.occurredAt)) FROM AnalyticsEvent e")
+    AnalyticsTimeRange findTimeRange();
 }

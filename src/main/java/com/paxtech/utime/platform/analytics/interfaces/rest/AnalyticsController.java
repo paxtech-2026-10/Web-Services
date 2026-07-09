@@ -7,10 +7,10 @@ import com.paxtech.utime.platform.analytics.domain.model.valueobjects.ActorType;
 import com.paxtech.utime.platform.analytics.domain.services.AnalyticsEventCommandService;
 import com.paxtech.utime.platform.analytics.domain.services.AnalyticsEventQueryService;
 import com.paxtech.utime.platform.analytics.interfaces.rest.resources.AnalyticsEventResource;
-import com.paxtech.utime.platform.analytics.interfaces.rest.resources.EventTypeCountResource;
+import com.paxtech.utime.platform.analytics.interfaces.rest.resources.AnalyticsSummaryResource;
 import com.paxtech.utime.platform.analytics.interfaces.rest.resources.RecordAnalyticsEventResource;
 import com.paxtech.utime.platform.analytics.interfaces.rest.transform.AnalyticsEventResourceFromEntityAssembler;
-import com.paxtech.utime.platform.analytics.interfaces.rest.transform.EventTypeCountResourceFromEntityAssembler;
+import com.paxtech.utime.platform.analytics.interfaces.rest.transform.AnalyticsSummaryResourceFromEntityAssembler;
 import com.paxtech.utime.platform.analytics.interfaces.rest.transform.RecordAnalyticsEventCommandFromResourceAssembler;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -95,14 +95,13 @@ public class AnalyticsController {
     }
 
     @GetMapping("/summary")
-    @Operation(summary = "Get event counts by type",
-            description = "Public endpoint. Returns the total number of recorded events grouped " +
-                    "by event type, to feed the analytics dashboard.")
+    @Operation(summary = "Get detailed analytics summary",
+            description = "Public endpoint. Returns total events, distinct actors, time range, " +
+                    "per-event-type totals with a breakdown by actor, and totals by actor type, " +
+                    "to feed the analytics dashboard.")
     @ApiResponses(value = {@ApiResponse(responseCode = "200", description = "Summary computed")})
-    public ResponseEntity<List<EventTypeCountResource>> getSummary() {
-        var resources = analyticsEventQueryService.handle(new GetAnalyticsSummaryQuery()).stream()
-                .map(EventTypeCountResourceFromEntityAssembler::toResourceFromEntity)
-                .toList();
-        return ResponseEntity.ok(resources);
+    public ResponseEntity<AnalyticsSummaryResource> getSummary() {
+        var summary = analyticsEventQueryService.handle(new GetAnalyticsSummaryQuery());
+        return ResponseEntity.ok(AnalyticsSummaryResourceFromEntityAssembler.toResourceFromEntity(summary));
     }
 }
