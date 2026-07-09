@@ -6,5 +6,5 @@ import com.paxtech.utime.platform.reservations.interfaces.rest.acl.WorkerDto;
 import com.paxtech.utime.platform.services.interfaces.rest.resources.ServiceResource;
 
 public record ReservationDetailsResource(
-        Long id, Long clientId, ClientDto client, ProviderDto provider, ServiceResource serviceId, TimeSlotResource timeSlot, WorkerDto workerId) {
+        Long id, Long clientId, ClientDto client, ProviderDto provider, ServiceResource serviceId, TimeSlotResource timeSlot, WorkerDto workerId, PaymentSummaryDto paymentId) {
 }

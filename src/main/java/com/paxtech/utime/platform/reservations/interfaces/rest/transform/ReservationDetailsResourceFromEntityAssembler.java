@@ -5,11 +5,14 @@ import com.paxtech.utime.platform.profiles.interfaces.acl.ProviderContextFacade;
 import com.paxtech.utime.platform.reservations.domain.model.aggregates.Reservation;
 
 import com.paxtech.utime.platform.reservations.domain.model.queries.GetTimeSlotByIdQuery;
+import com.paxtech.utime.platform.reservations.domain.model.valueobjects.PaymentStatus;
 
 import com.paxtech.utime.platform.reservations.domain.services.TimeSlotQueryService;
+import com.paxtech.utime.platform.reservations.infrastructure.persistence.jpa.repositories.PaymentRepository;
 import com.paxtech.utime.platform.reservations.interfaces.rest.acl.ClientDto;
 import com.paxtech.utime.platform.reservations.interfaces.rest.acl.ProviderDto;
 import com.paxtech.utime.platform.reservations.interfaces.rest.acl.WorkerDto;
+import com.paxtech.utime.platform.reservations.interfaces.rest.resources.PaymentSummaryDto;
 import com.paxtech.utime.platform.reservations.interfaces.rest.resources.ReservationDetailsResource;
 import com.paxtech.utime.platform.services.domain.model.queries.GetServiceByIdQuery;
 import com.paxtech.utime.platform.services.domain.services.ServiceQueryService;
@@ -18,7 +21,7 @@ import com.paxtech.utime.platform.workers.interfaces.rest.acl.WorkerContextFacad
 
 public class ReservationDetailsResourceFromEntityAssembler {
 
-    public static ReservationDetailsResource toResourceFromEntity(Reservation reservation, ProviderContextFacade providerContextFacade, TimeSlotQueryService timeSlotQueryService, WorkerContextFacade workerContextFacade, ServiceQueryService serviceQueryService, ClientContextFacade clientContextFacade) {
+    public static ReservationDetailsResource toResourceFromEntity(Reservation reservation, ProviderContextFacade providerContextFacade, TimeSlotQueryService timeSlotQueryService, WorkerContextFacade workerContextFacade, ServiceQueryService serviceQueryService, ClientContextFacade clientContextFacade, PaymentRepository paymentRepository) {
 
         var provider = providerContextFacade.fetchProviderById(reservation.getProviderId())
                 .orElseThrow(() -> new IllegalArgumentException("Provider not found"));
@@ -65,6 +68,27 @@ public class ReservationDetailsResourceFromEntityAssembler {
                         reservation.getProviderId()
                 ));
 
+        // Resolver el pago de la reserva para que el frontend pueda mostrar "Pagado / No pagado".
+        // Una reserva puede tener varios intentos de pago: preferimos uno SUCCEEDED; si no,
+        // tomamos el más reciente. Sin pagos, devolvemos un placeholder no pagado.
+        var payments = paymentRepository.findByReservationId(reservation.getId());
+        PaymentSummaryDto paymentDto;
+        if (payments.isEmpty()) {
+            paymentDto = PaymentSummaryDto.none();
+        } else {
+            var chosen = payments.stream()
+                    .filter(p -> p.getPaymentStatus() == PaymentStatus.SUCCEEDED)
+                    .findFirst()
+                    .orElse(payments.get(payments.size() - 1));
+            boolean paid = chosen.getPaymentStatus() == PaymentStatus.SUCCEEDED;
+            paymentDto = new PaymentSummaryDto(
+                    chosen.getId(),
+                    chosen.getMoney().amount(),
+                    chosen.getMoney().currency(),
+                    paid
+            );
+        }
+
         return new ReservationDetailsResource(
                 reservation.getId(),
                 reservation.getClientId(),
@@ -72,7 +96,8 @@ public class ReservationDetailsResourceFromEntityAssembler {
                 providerDto,
                 serviceResource,
                 timeSLotResource,
-                workerDto
+                workerDto,
+                paymentDto
         );
     }
 }
