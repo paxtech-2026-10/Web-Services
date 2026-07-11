@@ -7,6 +7,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -61,6 +62,6 @@ public class AnalyticsEvent extends AuditableAbstractAggregateRoot<AnalyticsEven
         this.providerId = command.providerId();
         this.reservationId = command.reservationId();
         this.metadata = command.metadata() != null ? new HashMap<>(command.metadata()) : new HashMap<>();
-        this.occurredAt = LocalDateTime.now();
+        this.occurredAt = LocalDateTime.now(ZoneOffset.UTC);
     }
 }

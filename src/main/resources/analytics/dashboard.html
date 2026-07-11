@@ -198,11 +198,22 @@ async function fetchJson(url, tries = 6){
 
 async function load(){
   try{
-    const summary = await fetchJson("/api/v1/analytics/summary");
-    let events = [];
-    try{ events = await fetchJson("/api/v1/analytics/events", 2); }catch(_){ events = []; }
+    const [summaryResult, eventsResult] = await Promise.allSettled([
+      fetchJson("/api/v1/analytics/summary"),
+      fetchJson("/api/v1/analytics/events")
+    ]);
+    if(summaryResult.status === "rejected") throw summaryResult.reason;
+
+    const summary = summaryResult.value;
+    const events = eventsResult.status === "fulfilled" ? eventsResult.value : [];
     render(summary, events);
-    clearMsg();
+    if(eventsResult.status === "rejected"){
+      showError("El resumen está actualizado, pero no se pudieron cargar los eventos recientes. Pulsa “Actualizar” en unos segundos.");
+      $("tblsub").textContent = "Error al cargar los eventos recientes";
+      $("rows").innerHTML = '<tr><td colspan="5" class="empty">No se pudieron cargar los eventos recientes.</td></tr>';
+    } else {
+      clearMsg();
+    }
     $("updated").textContent = "Actualizado " + new Date().toLocaleTimeString("es-PE",{hour:"2-digit",minute:"2-digit"});
   }catch(err){
     showError("No se pudo conectar con el servidor (puede estar reiniciándose). Pulsa “Actualizar” en unos segundos.");

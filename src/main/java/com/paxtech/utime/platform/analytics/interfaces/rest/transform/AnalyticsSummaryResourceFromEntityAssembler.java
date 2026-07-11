@@ -5,6 +5,8 @@ import com.paxtech.utime.platform.analytics.interfaces.rest.resources.AnalyticsS
 import com.paxtech.utime.platform.analytics.interfaces.rest.resources.AnalyticsSummaryResource.ActorTypeSummaryResource;
 import com.paxtech.utime.platform.analytics.interfaces.rest.resources.AnalyticsSummaryResource.EventTypeSummaryResource;
 
+import java.time.ZoneOffset;
+
 public class AnalyticsSummaryResourceFromEntityAssembler {
 
     public static AnalyticsSummaryResource toResourceFromEntity(AnalyticsSummary summary) {
@@ -24,8 +26,8 @@ public class AnalyticsSummaryResourceFromEntityAssembler {
         return new AnalyticsSummaryResource(
                 summary.totalEvents(),
                 summary.distinctActors(),
-                summary.firstEventAt() != null ? summary.firstEventAt().toString() : null,
-                summary.lastEventAt() != null ? summary.lastEventAt().toString() : null,
+                summary.firstEventAt() != null ? summary.firstEventAt().toInstant(ZoneOffset.UTC).toString() : null,
+                summary.lastEventAt() != null ? summary.lastEventAt().toInstant(ZoneOffset.UTC).toString() : null,
                 byEventType,
                 byActorType);
     }
