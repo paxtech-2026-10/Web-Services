@@ -298,9 +298,24 @@ function render(s, events){
   }).join("") || '<tr><td colspan="5" class="empty">Sin eventos</td></tr>';
 }
 
-$("refreshBtn").addEventListener("click", load);
-load();
-setInterval(load, 60000);
+// El endpoint /dashboard inyecta aquí los datos (resumen + eventos) consultados
+// server-side; queda en null si la página se sirve como archivo estático.
+const BOOTSTRAP = /*__ANALYTICS_BOOTSTRAP__*/null;
+
+if (BOOTSTRAP && BOOTSTRAP.summary) {
+  // Datos embebidos: render inmediato, sin fetch → sin carrera de cold start.
+  render(BOOTSTRAP.summary, BOOTSTRAP.events || []);
+  clearMsg();
+  $("updated").textContent = "Actualizado " + new Date().toLocaleTimeString("es-PE",{hour:"2-digit",minute:"2-digit"});
+  // Actualizar = recargar la página (el servidor vuelve a consultar por dentro).
+  $("refreshBtn").addEventListener("click", () => location.reload());
+  setInterval(() => location.reload(), 60000);
+} else {
+  // Fallback: servido como estático → el cliente consulta los endpoints JSON.
+  $("refreshBtn").addEventListener("click", load);
+  load();
+  setInterval(load, 60000);
+}
 </script>
 </body>
 </html>
